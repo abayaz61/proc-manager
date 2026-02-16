@@ -40,8 +40,8 @@ pub fn draw(frame: &mut Frame, app: &App, area: Rect) {
     draw_runtime_section(frame, app, right_rows[2]);
 }
 
-fn label_value_line(label: &str, value: &str) -> Line<'static> {
-    let label_style = Style::default().fg(Color::Cyan);
+fn label_value_line(label: &str, value: &str, palette: &ColorPalette) -> Line<'static> {
+    let label_style = Style::default().fg(palette.accent);
     let val_style = Style::default().fg(Color::White);
     Line::from(vec![
         Span::styled(format!("  {:<20}", label), label_style),
@@ -61,13 +61,13 @@ fn draw_os_section(frame: &mut Frame, app: &App, area: Rect) {
     let sys = &app.collector.system_data;
 
     let text = vec![
-        label_value_line("Hostname:", &sys.hostname),
-        label_value_line("OS Name:", &info.os_name),
-        label_value_line("OS:", &info.os_long_version),
-        label_value_line("OS Version:", &info.os_version),
-        label_value_line("Kernel:", &info.kernel_version),
-        label_value_line("Architecture:", &info.cpu_arch),
-        label_value_line("Uptime:", &format_duration_short(sys.uptime)),
+        label_value_line("Hostname:", &sys.hostname, &app.palette),
+        label_value_line("OS Name:", &info.os_name, &app.palette),
+        label_value_line("OS:", &info.os_long_version, &app.palette),
+        label_value_line("OS Version:", &info.os_version, &app.palette),
+        label_value_line("Kernel:", &info.kernel_version, &app.palette),
+        label_value_line("Architecture:", &info.cpu_arch, &app.palette),
+        label_value_line("Uptime:", &format_duration_short(sys.uptime), &app.palette),
     ];
 
     let block = section_block("Operating System", &app.palette);
@@ -82,12 +82,12 @@ fn draw_cpu_section(frame: &mut Frame, app: &App, area: Rect) {
     let logical_cores = sys.cpu_usage.len();
 
     let text = vec![
-        label_value_line("Model:", &info.cpu_brand),
-        label_value_line("Vendor:", &info.cpu_vendor),
-        label_value_line("Physical Cores:", &info.physical_core_count.to_string()),
-        label_value_line("Logical Cores:", &logical_cores.to_string()),
-        label_value_line("Architecture:", &info.cpu_arch),
-        label_value_line("Global Usage:", &format!("{:.1}%", sys.global_cpu_usage)),
+        label_value_line("Model:", &info.cpu_brand, &app.palette),
+        label_value_line("Vendor:", &info.cpu_vendor, &app.palette),
+        label_value_line("Physical Cores:", &info.physical_core_count.to_string(), &app.palette),
+        label_value_line("Logical Cores:", &logical_cores.to_string(), &app.palette),
+        label_value_line("Architecture:", &info.cpu_arch, &app.palette),
+        label_value_line("Global Usage:", &format!("{:.1}%", sys.global_cpu_usage), &app.palette),
         cpu_usage_bar(sys.global_cpu_usage),
     ];
 
@@ -142,11 +142,11 @@ fn draw_memory_section(frame: &mut Frame, app: &App, area: Rect) {
     let available = sys.total_memory.saturating_sub(sys.used_memory);
 
     let text = vec![
-        label_value_line("Total RAM:", &format_bytes(sys.total_memory)),
-        label_value_line("Used RAM:", &format!("{} ({:.1}%)", format_bytes(sys.used_memory), ram_pct)),
-        label_value_line("Available RAM:", &format_bytes(available)),
-        label_value_line("Total Swap:", &format_bytes(sys.total_swap)),
-        label_value_line("Used Swap:", &format!("{} ({:.1}%)", format_bytes(sys.used_swap), swap_pct)),
+        label_value_line("Total RAM:", &format_bytes(sys.total_memory), &app.palette),
+        label_value_line("Used RAM:", &format!("{} ({:.1}%)", format_bytes(sys.used_memory), ram_pct), &app.palette),
+        label_value_line("Available RAM:", &format_bytes(available), &app.palette),
+        label_value_line("Total Swap:", &format_bytes(sys.total_swap), &app.palette),
+        label_value_line("Used Swap:", &format!("{} ({:.1}%)", format_bytes(sys.used_swap), swap_pct), &app.palette),
     ];
 
     let block = section_block("Memory", &app.palette);
@@ -158,12 +158,12 @@ fn draw_bios_section(frame: &mut Frame, app: &App, area: Rect) {
     let info = &app.system_info_detail;
 
     let text = vec![
-        label_value_line("Vendor:", &info.bios_vendor),
-        label_value_line("Version:", &info.bios_version),
-        label_value_line("Release Date:", &info.bios_release_date),
+        label_value_line("Vendor:", &info.bios_vendor, &app.palette),
+        label_value_line("Version:", &info.bios_version, &app.palette),
+        label_value_line("Release Date:", &info.bios_release_date, &app.palette),
         Line::from(""),
-        label_value_line("System Manufacturer:", &info.system_manufacturer),
-        label_value_line("System Product:", &info.system_product),
+        label_value_line("System Manufacturer:", &info.system_manufacturer, &app.palette),
+        label_value_line("System Product:", &info.system_product, &app.palette),
     ];
 
     let block = section_block("BIOS / Firmware", &app.palette);
@@ -175,11 +175,11 @@ fn draw_board_section(frame: &mut Frame, app: &App, area: Rect) {
     let info = &app.system_info_detail;
 
     let text = vec![
-        label_value_line("Manufacturer:", &info.board_manufacturer),
-        label_value_line("Product:", &info.board_product),
+        label_value_line("Manufacturer:", &info.board_manufacturer, &app.palette),
+        label_value_line("Product:", &info.board_product, &app.palette),
         Line::from(""),
-        label_value_line("System SKU:", &info.system_sku),
-        label_value_line("System Family:", &info.system_family),
+        label_value_line("System SKU:", &info.system_sku, &app.palette),
+        label_value_line("System Family:", &info.system_family, &app.palette),
     ];
 
     let block = section_block("Motherboard", &app.palette);
@@ -193,9 +193,9 @@ fn draw_runtime_section(frame: &mut Frame, app: &App, area: Rect) {
     let hidden_count = app.process_list.hidden_count();
 
     let text = vec![
-        label_value_line("Total Processes:", &process_count.to_string()),
-        label_value_line("Pinned:", &pinned_count.to_string()),
-        label_value_line("Hidden:", &hidden_count.to_string()),
+        label_value_line("Total Processes:", &process_count.to_string(), &app.palette),
+        label_value_line("Pinned:", &pinned_count.to_string(), &app.palette),
+        label_value_line("Hidden:", &hidden_count.to_string(), &app.palette),
     ];
 
     let block = section_block("Runtime", &app.palette);

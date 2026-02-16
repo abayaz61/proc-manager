@@ -1,5 +1,5 @@
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
-use ratatui::style::{Color, Modifier, Style};
+use ratatui::style::{Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, Gauge, Paragraph, Sparkline};
 use ratatui::Frame;
@@ -209,7 +209,7 @@ fn draw_system_info(frame: &mut Frame, app: &App, area: Rect) {
         .border_style(app.palette.border_style());
 
     let bold = Style::default().add_modifier(Modifier::BOLD);
-    let label_style = Style::default().fg(Color::Cyan);
+    let label_style = Style::default().fg(app.palette.accent);
 
     let process_count = app.process_list.all_entries().len();
     let pinned_count = app.process_list.pinned_names().len();

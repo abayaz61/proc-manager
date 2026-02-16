@@ -61,7 +61,7 @@ pub fn draw(frame: &mut Frame, app: &App) {
     // Overlay dialogs
     match app.mode {
         crate::app::AppMode::Dialog => dialog::draw_kill_confirm(frame, app),
-        crate::app::AppMode::Help => help::draw(frame),
+        crate::app::AppMode::Help => help::draw(frame, app),
         crate::app::AppMode::NewProcess => dialog::draw_new_process(frame, app),
         crate::app::AppMode::Settings => settings::draw(frame, app),
         crate::app::AppMode::ContextMenu => context_menu::draw(frame, app),

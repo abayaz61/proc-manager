@@ -20,14 +20,14 @@ pub fn draw_kill_confirm(frame: &mut Frame, app: &App) {
         Line::from(""),
         Line::from(vec![
             Span::raw("  Kill process "),
-            Span::styled(&pid_info, Style::default().fg(Color::Red).add_modifier(Modifier::BOLD)),
+            Span::styled(&pid_info, Style::default().fg(app.palette.status_stopped).add_modifier(Modifier::BOLD)),
             Span::raw("?"),
         ]),
         Line::from(""),
         Line::from(vec![
-            Span::styled("  [y]", Style::default().fg(Color::Green)),
+            Span::styled("  [y]", Style::default().fg(app.palette.status_running)),
             Span::raw(" Yes  "),
-            Span::styled("[n/Esc]", Style::default().fg(Color::Red)),
+            Span::styled("[n/Esc]", Style::default().fg(app.palette.status_stopped)),
             Span::raw(" No"),
         ]),
     ];
@@ -35,7 +35,7 @@ pub fn draw_kill_confirm(frame: &mut Frame, app: &App) {
     let block = Block::default()
         .title(" Confirm Kill ")
         .borders(Borders::ALL)
-        .border_style(Style::default().fg(Color::Red));
+        .border_style(Style::default().fg(app.palette.status_stopped));
 
     let paragraph = Paragraph::new(text).block(block);
     frame.render_widget(paragraph, area);
@@ -59,7 +59,7 @@ pub fn draw_new_process(frame: &mut Frame, app: &App) {
     let block = Block::default()
         .title(" Start New Process ")
         .borders(Borders::ALL)
-        .border_style(Style::default().fg(Color::Cyan));
+        .border_style(Style::default().fg(app.palette.accent));
 
     let paragraph = Paragraph::new(text).block(block);
     frame.render_widget(paragraph, area);

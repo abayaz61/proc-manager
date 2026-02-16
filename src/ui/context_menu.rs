@@ -1,5 +1,5 @@
 use ratatui::layout::Rect;
-use ratatui::style::{Color, Modifier, Style};
+use ratatui::style::{Color, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, Clear, Paragraph};
 use ratatui::Frame;
@@ -28,10 +28,7 @@ pub fn draw(frame: &mut Frame, app: &App) {
     for (i, item) in menu.items.iter().enumerate() {
         let selected = i == menu.selected;
         let style = if selected {
-            Style::default()
-                .fg(Color::Yellow)
-                .bg(Color::DarkGray)
-                .add_modifier(Modifier::BOLD)
+            app.palette.selected_style()
         } else {
             Style::default().fg(Color::White)
         };
@@ -46,7 +43,7 @@ pub fn draw(frame: &mut Frame, app: &App) {
     let block = Block::default()
         .title(title)
         .borders(Borders::ALL)
-        .border_style(Style::default().fg(Color::Cyan));
+        .border_style(Style::default().fg(app.palette.accent));
 
     let paragraph = Paragraph::new(lines).block(block);
     frame.render_widget(paragraph, area);

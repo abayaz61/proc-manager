@@ -1,20 +1,23 @@
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
-use ratatui::style::{Color, Modifier, Style};
+use ratatui::style::{Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, Clear, Paragraph};
 use ratatui::Frame;
 
-pub fn draw(frame: &mut Frame) {
+use crate::app::App;
+
+pub fn draw(frame: &mut Frame, app: &App) {
     let area = centered_rect(60, 34, frame.area());
     frame.render_widget(Clear, area);
 
+    let p = &app.palette;
     let bold = Style::default().add_modifier(Modifier::BOLD);
-    let key_style = Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD);
+    let key_style = Style::default().fg(p.accent).add_modifier(Modifier::BOLD);
 
     let text = vec![
         Line::from(Span::styled("Navigation", bold)),
         Line::from(vec![
-            Span::styled("  ↑/k ↓/j    ", key_style),
+            Span::styled("  \u{2191}/k \u{2193}/j    ", key_style),
             Span::raw("Scroll up/down"),
         ]),
         Line::from(vec![
@@ -80,16 +83,16 @@ pub fn draw(frame: &mut Frame) {
             Span::raw("Open settings"),
         ]),
         Line::from(vec![
-            Span::styled("  ?          ", key_style),
-            Span::raw("Toggle this help"),
-        ]),
-        Line::from(vec![
             Span::styled("  d          ", key_style),
             Span::raw("Toggle compact view (hide dashboard)"),
         ]),
         Line::from(vec![
             Span::styled("  t          ", key_style),
             Span::raw("Open theme picker"),
+        ]),
+        Line::from(vec![
+            Span::styled("  ?          ", key_style),
+            Span::raw("Toggle this help"),
         ]),
         Line::from(""),
         Line::from(Span::styled("View Modes", bold)),
@@ -102,7 +105,7 @@ pub fn draw(frame: &mut Frame) {
     let block = Block::default()
         .title(" Help ")
         .borders(Borders::ALL)
-        .border_style(Style::default().fg(Color::Yellow));
+        .border_style(Style::default().fg(p.pin));
 
     let paragraph = Paragraph::new(text).block(block);
     frame.render_widget(paragraph, area);

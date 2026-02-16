@@ -1,5 +1,5 @@
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
-use ratatui::style::{Color, Modifier, Style};
+use ratatui::style::{Color, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, Clear, Paragraph};
 use ratatui::Frame;
@@ -21,7 +21,7 @@ pub fn draw(frame: &mut Frame, app: &App) {
     let inner = Block::default()
         .title(format!(" Hidden Processes ({}) ", item_count))
         .borders(Borders::ALL)
-        .border_style(Style::default().fg(Color::Magenta));
+        .border_style(Style::default().fg(app.palette.swap));
 
     let inner_area = inner.inner(area);
     frame.render_widget(inner, area);
@@ -47,10 +47,7 @@ pub fn draw(frame: &mut Frame, app: &App) {
     for (i, name) in hidden_names.iter().enumerate().skip(offset).take(max_visible) {
         let is_selected = i == selected;
         let style = if is_selected {
-            Style::default()
-                .fg(Color::Yellow)
-                .bg(Color::DarkGray)
-                .add_modifier(Modifier::BOLD)
+            app.palette.selected_style()
         } else {
             Style::default().fg(Color::White)
         };
@@ -65,12 +62,13 @@ pub fn draw(frame: &mut Frame, app: &App) {
     frame.render_widget(list_paragraph, chunks[0]);
 
     // Footer
+    let key_style = Style::default().fg(app.palette.accent);
     let footer = Line::from(vec![
-        Span::styled(" [Enter/Del]", Style::default().fg(Color::Cyan)),
+        Span::styled(" [Enter/Del]", key_style),
         Span::raw(" Unhide  "),
-        Span::styled("[a]", Style::default().fg(Color::Cyan)),
+        Span::styled("[a]", key_style),
         Span::raw(" Unhide All  "),
-        Span::styled("[Esc/H]", Style::default().fg(Color::Cyan)),
+        Span::styled("[Esc/H]", key_style),
         Span::raw(" Close"),
     ]);
     let footer_paragraph = Paragraph::new(vec![Line::from(""), footer]);

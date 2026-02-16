@@ -5,6 +5,7 @@ use ratatui::widgets::{Block, Borders, Clear, Paragraph};
 use ratatui::Frame;
 
 use crate::app::{App, SettingsItem};
+use crate::ui::theme::ColorPalette;
 
 pub fn draw(frame: &mut Frame, app: &App) {
     let state = match &app.settings_state {
@@ -12,8 +13,8 @@ pub fn draw(frame: &mut Frame, app: &App) {
         None => return,
     };
 
+    let p = &app.palette;
     let item_count = state.items.len() as u16;
-    // 3 lines header + items + 2 lines footer + 2 border = items + 7
     let height = item_count + 7;
     let area = centered_rect(60, height, frame.area());
     frame.render_widget(Clear, area);
@@ -23,27 +24,27 @@ pub fn draw(frame: &mut Frame, app: &App) {
 
     for (i, item) in state.items.iter().enumerate() {
         let selected = i == state.selected;
-        let line = render_item(item, selected);
+        let line = render_item(item, selected, p);
         lines.push(line);
     }
 
     lines.push(Line::from(""));
 
-    // Status message if any
+    let dim_style = Style::default().fg(p.border);
     if let Some(status) = &state.status {
         lines.push(Line::from(vec![
-            Span::styled("  > ", Style::default().fg(Color::Yellow)),
+            Span::styled("  > ", Style::default().fg(p.pin)),
             Span::styled(status.as_str(), Style::default().fg(Color::White)),
         ]));
     } else {
         lines.push(Line::from(vec![
-            Span::styled("  [Esc]", Style::default().fg(Color::DarkGray)),
+            Span::styled("  [Esc]", dim_style),
             Span::raw(" Close  "),
-            Span::styled("[Ctrl+S]", Style::default().fg(Color::DarkGray)),
+            Span::styled("[Ctrl+S]", dim_style),
             Span::raw(" Save & Close  "),
-            Span::styled("[←→]", Style::default().fg(Color::DarkGray)),
+            Span::styled("[←→]", dim_style),
             Span::raw(" Change  "),
-            Span::styled("[Enter]", Style::default().fg(Color::DarkGray)),
+            Span::styled("[Enter]", dim_style),
             Span::raw(" Select"),
         ]));
     }
@@ -51,25 +52,25 @@ pub fn draw(frame: &mut Frame, app: &App) {
     let block = Block::default()
         .title(" Settings ")
         .borders(Borders::ALL)
-        .border_style(Style::default().fg(Color::Cyan));
+        .border_style(Style::default().fg(p.accent));
 
     let paragraph = Paragraph::new(lines).block(block);
     frame.render_widget(paragraph, area);
 }
 
-fn render_item(item: &SettingsItem, selected: bool) -> Line<'static> {
+fn render_item(item: &SettingsItem, selected: bool, palette: &ColorPalette) -> Line<'static> {
     let indicator = if selected { " > " } else { "   " };
     let sel_style = if selected {
         Style::default()
-            .fg(Color::Yellow)
+            .fg(palette.pin)
             .add_modifier(Modifier::BOLD)
     } else {
         Style::default().fg(Color::White)
     };
     let val_style = if selected {
-        Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)
+        Style::default().fg(palette.accent).add_modifier(Modifier::BOLD)
     } else {
-        Style::default().fg(Color::Gray)
+        Style::default().fg(palette.border)
     };
 
     match item {
