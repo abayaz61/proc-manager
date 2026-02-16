@@ -1,5 +1,7 @@
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 
+use crate::app::ViewMode;
+
 pub struct AppLayout {
     pub header: Rect,
     pub cpu_panel: Rect,
@@ -8,10 +10,15 @@ pub struct AppLayout {
     pub disk_panel: Option<Rect>,
     pub process_table: Rect,
     pub statusbar: Rect,
+    pub main_content: Option<Rect>,
 }
 
 impl AppLayout {
-    pub fn new(area: Rect) -> Self {
+    pub fn new(area: Rect, view_mode: ViewMode) -> Self {
+        if view_mode != ViewMode::Default {
+            return Self::non_default_layout(area);
+        }
+
         let is_narrow = area.width < 80;
         let is_short = area.height < 20;
 
@@ -69,6 +76,30 @@ impl AppLayout {
             disk_panel,
             process_table: main_chunks[2],
             statusbar: main_chunks[3],
+            main_content: None,
+        }
+    }
+
+    fn non_default_layout(area: Rect) -> Self {
+        let chunks = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Length(1), // header
+                Constraint::Min(4),   // main content
+                Constraint::Length(1), // status bar
+            ])
+            .split(area);
+
+        let dummy = Rect::default();
+        Self {
+            header: chunks[0],
+            cpu_panel: dummy,
+            memory_panel: dummy,
+            network_panel: dummy,
+            disk_panel: None,
+            process_table: dummy,
+            statusbar: chunks[2],
+            main_content: Some(chunks[1]),
         }
     }
 }

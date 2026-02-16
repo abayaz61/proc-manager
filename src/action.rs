@@ -41,5 +41,6 @@ pub enum Action {
     SettingsRight,
     SettingsSelect,
     SettingsSave,
+    CycleViewMode,
     Noop,
 }

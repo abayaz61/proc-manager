@@ -58,6 +58,15 @@ pub fn draw(frame: &mut Frame, app: &App, area: Rect) {
                     Span::raw("Settings "),
                     Span::styled("[?]", Style::default().fg(Color::Cyan)),
                     Span::raw("Help "),
+                    Span::styled("[Tab]", Style::default().fg(Color::Cyan)),
+                    Span::raw("View "),
+                    Span::styled(
+                        view_mode_indicator(app),
+                        Style::default()
+                            .fg(Color::Magenta)
+                            .add_modifier(Modifier::BOLD),
+                    ),
+                    Span::raw(" "),
                     Span::styled(
                         sort_info,
                         Style::default()
@@ -71,6 +80,10 @@ pub fn draw(frame: &mut Frame, app: &App, area: Rect) {
 
     let paragraph = Paragraph::new(line).style(Style::default().fg(Color::White));
     frame.render_widget(paragraph, area);
+}
+
+fn view_mode_indicator(app: &App) -> String {
+    format!("[{}]", app.view_mode.label())
 }
 
 fn sort_indicator(app: &App) -> String {

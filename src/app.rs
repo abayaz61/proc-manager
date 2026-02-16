@@ -8,9 +8,41 @@ use crate::config::Config;
 use crate::data::collector::DataCollector;
 use crate::data::history::RingBuffer;
 use crate::data::persistence::ProcessState;
+use crate::data::sysinfo_detail::SystemInfoDetail;
 use crate::data::process::{ProcessList, SortColumn};
 use crate::event::{Event, EventHandler};
 use crate::input;
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum ViewMode {
+    Default,
+    PerCpuChart,
+    ResourceGraphs,
+    SystemOverview,
+    SystemInfo,
+}
+
+impl ViewMode {
+    pub fn next(self) -> Self {
+        match self {
+            ViewMode::Default => ViewMode::PerCpuChart,
+            ViewMode::PerCpuChart => ViewMode::ResourceGraphs,
+            ViewMode::ResourceGraphs => ViewMode::SystemOverview,
+            ViewMode::SystemOverview => ViewMode::SystemInfo,
+            ViewMode::SystemInfo => ViewMode::Default,
+        }
+    }
+
+    pub fn label(self) -> &'static str {
+        match self {
+            ViewMode::Default => "Processes",
+            ViewMode::PerCpuChart => "Per-CPU",
+            ViewMode::ResourceGraphs => "Graphs",
+            ViewMode::SystemOverview => "Overview",
+            ViewMode::SystemInfo => "System Info",
+        }
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum AppMode {
@@ -85,6 +117,7 @@ pub enum ContextMenuAction {
 
 pub struct App {
     pub mode: AppMode,
+    pub view_mode: ViewMode,
     pub collector: DataCollector,
     pub process_list: ProcessList,
     pub table_state: TableState,
@@ -98,6 +131,7 @@ pub struct App {
     pub hidden_list_selected: usize,
     pub process_table_area: std::cell::Cell<Rect>,
     pub tick_rate_changed: Option<u64>,
+    pub system_info_detail: SystemInfoDetail,
 
     cpu_history: RingBuffer<f64>,
     mem_history: RingBuffer<f64>,
@@ -122,6 +156,7 @@ impl App {
 
         Self {
             mode: AppMode::Normal,
+            view_mode: ViewMode::Default,
             collector: DataCollector::new(),
             process_list,
             table_state: TableState::default().with_selected(0),
@@ -134,6 +169,7 @@ impl App {
             hidden_list_selected: 0,
             process_table_area: std::cell::Cell::new(Rect::default()),
             tick_rate_changed: None,
+            system_info_detail: SystemInfoDetail::collect(),
             cpu_history: RingBuffer::new(history_len),
             mem_history: RingBuffer::new(history_len),
             net_rx_history: RingBuffer::new(history_len),
@@ -246,6 +282,26 @@ impl App {
     }
 
     fn dispatch(&mut self, action: Action) {
+        // In non-Default views, ignore process-specific actions
+        if self.view_mode != ViewMode::Default {
+            match action {
+                Action::Quit => unreachable!(),
+                Action::CycleViewMode => {
+                    self.view_mode = self.view_mode.next();
+                    return;
+                }
+                Action::ToggleHelp => {
+                    self.toggle_help();
+                    return;
+                }
+                Action::OpenSettings => {
+                    self.open_settings();
+                    return;
+                }
+                _ => return,
+            }
+        }
+
         match action {
             Action::Quit => unreachable!(),
             Action::ScrollUp => self.scroll_up(),
@@ -301,6 +357,9 @@ impl App {
             Action::SettingsRight => self.settings_adjust(1),
             Action::SettingsSelect => self.settings_select(),
             Action::SettingsSave => self.settings_save(),
+            Action::CycleViewMode => {
+                self.view_mode = self.view_mode.next();
+            }
             Action::Noop => {}
         }
     }
@@ -391,7 +450,7 @@ impl App {
             return;
         }
 
-        if self.mode != AppMode::Normal {
+        if self.mode != AppMode::Normal || self.view_mode != ViewMode::Default {
             return;
         }
 

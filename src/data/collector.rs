@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use sysinfo::{Networks, ProcessRefreshKind, ProcessesToUpdate, RefreshKind, System, UpdateKind};
+use sysinfo::{Networks, ProcessRefreshKind, ProcessesToUpdate, RefreshKind, System, UpdateKind, Users};
 
 use super::disk::DiskData;
 use super::network::NetworkData;
@@ -11,6 +11,7 @@ use super::system::SystemData;
 pub struct DataCollector {
     sys: System,
     networks: Networks,
+    users: Users,
     pub system_data: SystemData,
     pub network_data: NetworkData,
     pub disk_data: DiskData,
@@ -32,9 +33,12 @@ impl DataCollector {
                 ),
         );
 
+        let users = Users::new_with_refreshed_list();
+
         Self {
             sys,
             networks: Networks::new_with_refreshed_list(),
+            users,
             system_data: SystemData::new(),
             network_data: NetworkData::new(),
             disk_data: DiskData::new(),
@@ -102,7 +106,12 @@ impl DataCollector {
                     name: p.name().to_string_lossy().into_owned(),
                     user: p
                         .user_id()
-                        .map(|uid| uid.to_string())
+                        .and_then(|uid| {
+                            self.users
+                                .iter()
+                                .find(|u| u.id() == uid)
+                                .map(|u| u.name().to_string())
+                        })
                         .unwrap_or_default(),
                     cpu_percent: p.cpu_usage(),
                     memory_bytes: p.memory(),

@@ -12,25 +12,47 @@ pub mod process_table;
 pub mod settings;
 pub mod statusbar;
 pub mod theme;
+pub mod view_overview;
+pub mod view_percpu;
+pub mod view_resource_graphs;
+pub mod view_sysinfo;
 
 use ratatui::Frame;
 
-use crate::app::App;
+use crate::app::{App, ViewMode};
 use layout::AppLayout;
 
 pub fn draw(frame: &mut Frame, app: &App) {
-    let layout = AppLayout::new(frame.area());
+    let layout = AppLayout::new(frame.area(), app.view_mode);
 
     header::draw(frame, &app.collector.system_data, layout.header);
-    cpu_panel::draw(frame, app, layout.cpu_panel);
-    memory_panel::draw(frame, app, layout.memory_panel);
-    network_panel::draw(frame, app, layout.network_panel);
 
-    if let Some(disk_area) = layout.disk_panel {
-        disk_panel::draw(frame, app, disk_area);
+    match app.view_mode {
+        ViewMode::Default => {
+            cpu_panel::draw(frame, app, layout.cpu_panel);
+            memory_panel::draw(frame, app, layout.memory_panel);
+            network_panel::draw(frame, app, layout.network_panel);
+
+            if let Some(disk_area) = layout.disk_panel {
+                disk_panel::draw(frame, app, disk_area);
+            }
+
+            process_table::draw(frame, app, layout.process_table);
+        }
+        ViewMode::PerCpuChart => {
+            view_percpu::draw(frame, app, layout.main_content.unwrap());
+        }
+        ViewMode::ResourceGraphs => {
+            view_resource_graphs::draw(frame, app, layout.main_content.unwrap());
+        }
+        ViewMode::SystemOverview => {
+            view_overview::draw(frame, app, layout.main_content.unwrap());
+        }
+        ViewMode::SystemInfo => {
+            view_sysinfo::draw(frame, app, layout.main_content.unwrap());
+        }
     }
 
-    process_table::draw(frame, app, layout.process_table);
     statusbar::draw(frame, app, layout.statusbar);
 
     // Overlay dialogs

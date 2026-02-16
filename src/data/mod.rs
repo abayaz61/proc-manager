@@ -5,3 +5,4 @@ pub mod network;
 pub mod persistence;
 pub mod process;
 pub mod system;
+pub mod sysinfo_detail;

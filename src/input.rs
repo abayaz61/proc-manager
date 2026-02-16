@@ -55,6 +55,7 @@ fn map_normal(key: KeyEvent) -> Action {
         KeyCode::F(6) | KeyCode::Char('6') => Action::SortBy(SortColumn::Status),
         KeyCode::F(7) | KeyCode::Char('7') => Action::SortBy(SortColumn::Threads),
         KeyCode::F(8) | KeyCode::Char('8') => Action::SortBy(SortColumn::StartTime),
+        KeyCode::Tab => Action::CycleViewMode,
         _ => Action::Noop,
     }
 }
