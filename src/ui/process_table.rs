@@ -353,6 +353,10 @@ fn build_title(app: &App, has_pins: bool) -> String {
         parts.push(format!(" filter: \"{}\"", app.search_query));
     }
 
+    if let Some(pid) = app.process_list.pid_filter() {
+        parts.push(format!(" pid: {}", pid));
+    }
+
     parts.push(" ".to_string());
     parts.join(" |")
 }

@@ -47,5 +47,9 @@ pub enum Action {
     ThemePickerUp,
     ThemePickerDown,
     ThemePickerSelect,
+    OpenPidFilter,
+    PidFilterInput(char),
+    PidFilterBackspace,
+    PidFilterSubmit,
     Noop,
 }

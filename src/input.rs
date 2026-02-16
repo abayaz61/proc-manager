@@ -25,6 +25,7 @@ pub fn map_key(key: KeyEvent, mode: AppMode) -> Action {
         AppMode::ContextMenu => map_context_menu(key),
         AppMode::HiddenList => map_hidden_list(key),
         AppMode::ThemePicker => map_theme_picker(key),
+        AppMode::PidFilter => map_pid_filter(key),
     }
 }
 
@@ -62,6 +63,7 @@ fn map_normal(key: KeyEvent) -> Action {
         KeyCode::Tab => Action::CycleViewMode,
         KeyCode::Char('d') => Action::ToggleCompactView,
         KeyCode::Char('t') => Action::OpenThemePicker,
+        KeyCode::Char('f') => Action::OpenPidFilter,
         _ => Action::Noop,
     }
 }
@@ -131,6 +133,16 @@ fn map_new_process(key: KeyEvent) -> Action {
         KeyCode::Enter => Action::SubmitNewProcess,
         KeyCode::Backspace => Action::NewProcessBackspace,
         KeyCode::Char(c) => Action::NewProcessInput(c),
+        _ => Action::Noop,
+    }
+}
+
+fn map_pid_filter(key: KeyEvent) -> Action {
+    match key.code {
+        KeyCode::Esc => Action::CancelDialog,
+        KeyCode::Enter => Action::PidFilterSubmit,
+        KeyCode::Backspace => Action::PidFilterBackspace,
+        KeyCode::Char(c) if c.is_ascii_digit() => Action::PidFilterInput(c),
         _ => Action::Noop,
     }
 }

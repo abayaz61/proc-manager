@@ -57,6 +57,7 @@ pub enum AppMode {
     ContextMenu,
     HiddenList,
     ThemePicker,
+    PidFilter,
 }
 
 #[derive(Debug, Clone)]
@@ -130,6 +131,7 @@ pub struct App {
     pub table_state: TableState,
     pub search_query: String,
     pub new_process_input: String,
+    pub pid_filter_input: String,
     pub config: Config,
     pub visible_columns: Vec<Column>,
     pub status_message: Option<String>,
@@ -183,6 +185,7 @@ impl App {
             table_state: TableState::default().with_selected(0),
             search_query: String::new(),
             new_process_input: String::new(),
+            pid_filter_input: String::new(),
             visible_columns,
             status_message: None,
             status_message_ttl: 0,
@@ -363,6 +366,10 @@ impl App {
                     self.status_message = None;
                     return;
                 }
+                if self.mode == AppMode::PidFilter {
+                    self.pid_filter_input.clear();
+                    self.process_list.set_pid_filter(None);
+                }
                 self.mode = AppMode::Normal;
                 self.status_message = None;
             }
@@ -408,6 +415,10 @@ impl App {
             Action::ThemePickerUp => self.theme_picker_navigate(-1),
             Action::ThemePickerDown => self.theme_picker_navigate(1),
             Action::ThemePickerSelect => self.theme_picker_select(),
+            Action::OpenPidFilter => self.open_pid_filter(),
+            Action::PidFilterInput(c) => self.pid_filter_input(c),
+            Action::PidFilterBackspace => self.pid_filter_backspace(),
+            Action::PidFilterSubmit => self.pid_filter_submit(),
             Action::Noop => {}
         }
     }
@@ -1201,6 +1212,42 @@ impl App {
             self.palette = prev;
         }
         self.mode = AppMode::Normal;
+    }
+
+    fn open_pid_filter(&mut self) {
+        self.pid_filter_input = String::new();
+        self.process_list.set_pid_filter(None);
+        self.mode = AppMode::PidFilter;
+    }
+
+    fn pid_filter_input(&mut self, c: char) {
+        if c.is_ascii_digit() {
+            self.pid_filter_input.push(c);
+            let pid = self.pid_filter_input.parse::<u32>().ok();
+            self.process_list.set_pid_filter(pid);
+            self.table_state.select(Some(0));
+        }
+    }
+
+    fn pid_filter_backspace(&mut self) {
+        self.pid_filter_input.pop();
+        let pid = if self.pid_filter_input.is_empty() {
+            None
+        } else {
+            self.pid_filter_input.parse::<u32>().ok()
+        };
+        self.process_list.set_pid_filter(pid);
+        self.table_state.select(Some(0));
+    }
+
+    fn pid_filter_submit(&mut self) {
+        // Keep filter active, return to normal mode
+        self.mode = AppMode::Normal;
+        if self.pid_filter_input.is_empty() {
+            self.process_list.set_pid_filter(None);
+        } else {
+            self.set_status(format!("PID filter: {}", self.pid_filter_input));
+        }
     }
 
     pub fn selected_process(&self) -> Option<&crate::data::process::ProcessEntry> {

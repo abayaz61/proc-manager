@@ -63,6 +63,7 @@ pub struct ProcessList {
     pub sort_column: SortColumn,
     pub sort_ascending: bool,
     pub search_query: String,
+    pid_filter: Option<u32>,
     pinned_pids: HashSet<u32>,
     pinned_names: HashSet<String>,
     hidden_names: HashSet<String>,
@@ -82,6 +83,7 @@ impl ProcessList {
             sort_column: SortColumn::Cpu,
             sort_ascending: false,
             search_query: String::new(),
+            pid_filter: None,
             pinned_pids: HashSet::new(),
             pinned_names: HashSet::new(),
             hidden_names: HashSet::new(),
@@ -453,8 +455,18 @@ impl ProcessList {
         self.rebuild_filter();
     }
 
+    pub fn set_pid_filter(&mut self, pid: Option<u32>) {
+        self.pid_filter = pid;
+        self.rebuild_filter();
+    }
+
+    pub fn pid_filter(&self) -> Option<u32> {
+        self.pid_filter
+    }
+
     fn rebuild_filter(&mut self) {
         let query = self.search_query.to_lowercase();
+        let pid_filter = self.pid_filter;
         self.filtered_indices = self
             .entries
             .iter()
@@ -463,6 +475,13 @@ impl ProcessList {
                 // Always hide hidden processes from main list
                 if self.hidden_names.contains(&e.name) {
                     return false;
+                }
+                // PID filter: match PID prefix
+                if let Some(pid_val) = pid_filter {
+                    let pid_str = pid_val.to_string();
+                    if !e.pid.to_string().starts_with(&pid_str) {
+                        return false;
+                    }
                 }
                 if query.is_empty() {
                     return true;
