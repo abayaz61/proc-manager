@@ -1,5 +1,5 @@
 use ratatui::layout::{Constraint, Rect};
-use ratatui::style::{Color, Modifier, Style};
+use ratatui::style::{Modifier, Style};
 use ratatui::widgets::{Block, Borders, Cell, Row, Table};
 use ratatui::Frame;
 
@@ -156,35 +156,35 @@ impl Column {
                 } else {
                     format!("  {}", p.pid)
                 };
-                (text, None)
+                (text, None) // PID/Name color handled by row_style in build_row
             }
             Column::Name => (p.name.clone(), None),
-            Column::User => (p.user.clone(), Some(Style::default())),
-            Column::Cpu => (format_cpu_percent(p.cpu_percent), Some(Style::default())),
-            Column::Memory => (format_bytes(p.memory_bytes), Some(Style::default())),
+            Column::User => (p.user.clone(), Some(Style::default().fg(palette.text_secondary))),
+            Column::Cpu => (format_cpu_percent(p.cpu_percent), Some(Style::default().fg(palette.cpu))),
+            Column::Memory => (format_bytes(p.memory_bytes), Some(Style::default().fg(palette.memory))),
             Column::Status => {
                 let style = match p.status {
                     ProcessStatus::Running => Style::default().fg(palette.status_running),
                     ProcessStatus::Sleeping => Style::default().fg(palette.status_sleeping),
                     ProcessStatus::Stopped => Style::default().fg(palette.status_stopped),
                     ProcessStatus::Zombie => Style::default().fg(palette.status_zombie),
-                    ProcessStatus::Dead => Style::default().fg(Color::DarkGray),
-                    ProcessStatus::Unknown => Style::default(),
+                    ProcessStatus::Dead => Style::default().fg(palette.status_sleeping),
+                    ProcessStatus::Unknown => Style::default().fg(palette.text_secondary),
                 };
                 (p.status.as_str().to_string(), Some(style))
             }
-            Column::Threads => (p.thread_count.to_string(), Some(Style::default())),
+            Column::Threads => (p.thread_count.to_string(), Some(Style::default().fg(palette.text_secondary))),
             Column::Time => {
                 let running_time = now.saturating_sub(p.start_time);
-                (format_duration_short(running_time), Some(Style::default()))
+                (format_duration_short(running_time), Some(Style::default().fg(palette.text_secondary)))
             }
-            Column::DiskRead => (format_bytes(p.disk_read_bytes), Some(Style::default())),
-            Column::DiskWrite => (format_bytes(p.disk_write_bytes), Some(Style::default())),
+            Column::DiskRead => (format_bytes(p.disk_read_bytes), Some(Style::default().fg(palette.disk_read))),
+            Column::DiskWrite => (format_bytes(p.disk_write_bytes), Some(Style::default().fg(palette.disk_write))),
             Column::Ppid => {
                 let text = p.parent_pid.map(|pid| pid.to_string()).unwrap_or_else(|| "-".to_string());
-                (text, Some(Style::default()))
+                (text, Some(Style::default().fg(palette.text_secondary)))
             }
-            Column::Command => (p.command.clone(), Some(Style::default())),
+            Column::Command => (p.command.clone(), Some(Style::default().fg(palette.text_secondary))),
         }
     }
 
@@ -241,15 +241,16 @@ pub fn draw(frame: &mut Frame, app: &App, area: Rect) {
         }
         // Separator row
         let sep_text = format!("── pinned: {} ──", pinned.len());
+        let sep_style = Style::default().fg(app.palette.border);
         let mut sep_cells: Vec<Cell> = Vec::new();
         for (i, _) in columns.iter().enumerate() {
             if i == 1 {
-                sep_cells.push(Cell::from(sep_text.clone()).style(Style::default().fg(Color::DarkGray)));
+                sep_cells.push(Cell::from(sep_text.clone()).style(sep_style));
             } else {
                 sep_cells.push(Cell::from(""));
             }
         }
-        rows.push(Row::new(sep_cells).style(Style::default().fg(Color::DarkGray)));
+        rows.push(Row::new(sep_cells).style(sep_style));
     }
 
     let unpinned = if has_pins {
@@ -295,7 +296,7 @@ fn build_header(columns: &[Column], app: &App) -> (Row<'static>, Vec<Constraint>
 fn build_row(p: &ProcessEntry, now: u64, columns: &[Column], is_pinned: bool, palette: &ColorPalette) -> Row<'static> {
     // Dead pinned processes get a faded gray style
     if p.is_dead {
-        let dead_style = Style::default().fg(Color::DarkGray);
+        let dead_style = Style::default().fg(palette.border);
         let cells: Vec<Cell> = columns
             .iter()
             .map(|col| Cell::from(col.dead_cell_value(p)).style(dead_style))
@@ -306,7 +307,7 @@ fn build_row(p: &ProcessEntry, now: u64, columns: &[Column], is_pinned: bool, pa
     let row_style = if is_pinned {
         Style::default().fg(palette.pin)
     } else {
-        Style::default()
+        Style::default().fg(palette.text)
     };
 
     let cells: Vec<Cell> = columns
@@ -315,10 +316,7 @@ fn build_row(p: &ProcessEntry, now: u64, columns: &[Column], is_pinned: bool, pa
             let (text, style_override) = col.cell_value(p, now, is_pinned, palette);
             match col {
                 Column::Pid | Column::Name => Cell::from(text).style(row_style),
-                Column::Status => {
-                    Cell::from(text).style(style_override.unwrap_or_default())
-                }
-                _ => Cell::from(text),
+                _ => Cell::from(text).style(style_override.unwrap_or(row_style)),
             }
         })
         .collect();

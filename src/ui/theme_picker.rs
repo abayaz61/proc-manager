@@ -1,5 +1,5 @@
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
-use ratatui::style::{Color, Modifier, Style};
+use ratatui::style::{Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, Clear, Paragraph};
 use ratatui::Frame;
@@ -7,11 +7,13 @@ use ratatui::Frame;
 use crate::app::App;
 use crate::ui::theme::ALL_PALETTES;
 
+/// Fixed width for theme name column (longest name is "Tokyo Night" = 11 chars).
+const NAME_WIDTH: usize = 14;
+
 pub fn draw(frame: &mut Frame, app: &App) {
     let count = ALL_PALETTES.len() as u16;
-    // 1 blank + items + 1 blank + 1 footer + 2 border = items + 5
-    let height = count + 5;
-    let area = centered_rect(50, height, frame.area());
+    let height = (count + 5).min(frame.area().height.saturating_sub(4));
+    let area = centered_rect(60, height, frame.area());
     frame.render_widget(Clear, area);
 
     let active_name = app.palette.name;
@@ -19,38 +21,49 @@ pub fn draw(frame: &mut Frame, app: &App) {
     let mut lines: Vec<Line> = Vec::new();
     lines.push(Line::from(""));
 
-    for (i, palette) in ALL_PALETTES.iter().enumerate() {
-        let selected = i == app.theme_picker_selected;
+    // Scrolling support
+    let max_visible = (height.saturating_sub(5)) as usize; // borders(2) + blank(1) + blank(1) + footer(1)
+    let selected = app.theme_picker_selected;
+    let offset = if selected >= max_visible {
+        selected - max_visible + 1
+    } else {
+        0
+    };
+
+    for (i, palette) in ALL_PALETTES.iter().enumerate().skip(offset).take(max_visible) {
+        let is_selected = i == selected;
         let is_active = palette.name == active_name;
 
-        let indicator = if selected { " > " } else { "   " };
-        let check = if is_active { " *" } else { "" };
+        // Indicator: " > " or "   "
+        let indicator = if is_selected { " > " } else { "   " };
 
-        let name_style = if selected {
+        // Active mark: " *" or "  "
+        let check = if is_active { " *" } else { "  " };
+
+        let name_style = if is_selected {
             Style::default()
                 .fg(palette.accent)
                 .add_modifier(Modifier::BOLD)
         } else {
-            Style::default().fg(Color::White)
+            Style::default().fg(app.palette.text)
         };
 
-        // Build color swatch: ██ blocks for each key color
-        let swatches = palette.swatch_colors();
+        let check_style = Style::default()
+            .fg(app.palette.cpu)
+            .add_modifier(Modifier::BOLD);
+
+        // Pad name to fixed width
+        let padded_name = format!("{:<width$}", palette.name, width = NAME_WIDTH);
+
         let mut spans = vec![
             Span::styled(indicator.to_string(), name_style),
-            Span::styled(format!("{:<14}", palette.name), name_style),
-            Span::styled(
-                check.to_string(),
-                Style::default()
-                    .fg(Color::Green)
-                    .add_modifier(Modifier::BOLD),
-            ),
+            Span::styled(padded_name, name_style),
+            Span::styled(check.to_string(), check_style),
+            Span::raw("  "),
         ];
 
-        // Padding before swatches
-        let pad = 16usize.saturating_sub(palette.name.len() + check.len());
-        spans.push(Span::raw(" ".repeat(pad)));
-
+        // Color swatches — always at same column
+        let swatches = palette.swatch_colors();
         for color in &swatches {
             spans.push(Span::styled(
                 "\u{2588}\u{2588}",
@@ -63,17 +76,19 @@ pub fn draw(frame: &mut Frame, app: &App) {
     }
 
     lines.push(Line::from(""));
+
+    let key_style = Style::default().fg(app.palette.accent);
     lines.push(Line::from(vec![
-        Span::styled("  [Esc]", Style::default().fg(Color::DarkGray)),
+        Span::styled("  [Esc]", key_style),
         Span::raw(" Cancel  "),
-        Span::styled("[Enter]", Style::default().fg(Color::DarkGray)),
+        Span::styled("[Enter]", key_style),
         Span::raw(" Apply  "),
-        Span::styled("*", Style::default().fg(Color::Green)),
+        Span::styled("*", Style::default().fg(app.palette.cpu).add_modifier(Modifier::BOLD)),
         Span::raw(" = active"),
     ]));
 
     let block = Block::default()
-        .title(" Theme ")
+        .title(format!(" Theme ({}/{}) ", selected + 1, ALL_PALETTES.len()))
         .borders(Borders::ALL)
         .border_style(Style::default().fg(app.palette.accent));
 

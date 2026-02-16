@@ -38,6 +38,10 @@ pub struct ColorPalette {
 
     // General accent
     pub accent: Color,
+
+    // Text
+    pub text: Color,
+    pub text_secondary: Color,
 }
 
 impl ColorPalette {
@@ -77,6 +81,14 @@ pub const ALL_PALETTES: &[ColorPalette] = &[
     PALETTE_GRUVBOX,
     PALETTE_TOKYO_NIGHT,
     PALETTE_CATPPUCCIN,
+    PALETTE_ONE_DARK,
+    PALETTE_EVERFOREST,
+    PALETTE_KANAGAWA,
+    PALETTE_ROSE_PINE,
+    PALETTE_SYNTHWAVE,
+    PALETTE_AYU_DARK,
+    PALETTE_MATERIAL,
+    PALETTE_CYBERPUNK,
 ];
 
 pub fn by_name(name: &str) -> ColorPalette {
@@ -110,6 +122,8 @@ pub const PALETTE_DEFAULT: ColorPalette = ColorPalette {
     table_header_fg: Color::Yellow,
     pin: Color::Yellow,
     accent: Color::Cyan,
+    text: Color::White,
+    text_secondary: Color::Gray,
 };
 
 // ── Dracula ─────────────────────────────────────────────────────────────────
@@ -135,6 +149,8 @@ pub const PALETTE_DRACULA: ColorPalette = ColorPalette {
     table_header_fg: Color::Rgb(255, 184, 108),
     pin: Color::Rgb(241, 250, 140),
     accent: Color::Rgb(189, 147, 249),
+    text: Color::Rgb(248, 248, 242),
+    text_secondary: Color::Rgb(158, 154, 180),
 };
 
 // ── Nord ────────────────────────────────────────────────────────────────────
@@ -160,6 +176,8 @@ pub const PALETTE_NORD: ColorPalette = ColorPalette {
     table_header_fg: Color::Rgb(129, 161, 193),
     pin: Color::Rgb(235, 203, 139),
     accent: Color::Rgb(136, 192, 208),
+    text: Color::Rgb(236, 239, 244),
+    text_secondary: Color::Rgb(216, 222, 233),
 };
 
 // ── Monokai ─────────────────────────────────────────────────────────────────
@@ -185,6 +203,8 @@ pub const PALETTE_MONOKAI: ColorPalette = ColorPalette {
     table_header_fg: Color::Rgb(253, 151, 31),
     pin: Color::Rgb(230, 219, 116),
     accent: Color::Rgb(102, 217, 239),
+    text: Color::Rgb(248, 248, 242),
+    text_secondary: Color::Rgb(168, 167, 150),
 };
 
 // ── Solarized Dark ──────────────────────────────────────────────────────────
@@ -210,6 +230,8 @@ pub const PALETTE_SOLARIZED: ColorPalette = ColorPalette {
     table_header_fg: Color::Rgb(38, 139, 210),
     pin: Color::Rgb(181, 137, 0),
     accent: Color::Rgb(38, 139, 210),
+    text: Color::Rgb(131, 148, 150),
+    text_secondary: Color::Rgb(101, 123, 131),
 };
 
 // ── Gruvbox ─────────────────────────────────────────────────────────────────
@@ -235,6 +257,8 @@ pub const PALETTE_GRUVBOX: ColorPalette = ColorPalette {
     table_header_fg: Color::Rgb(254, 128, 25),
     pin: Color::Rgb(250, 189, 47),
     accent: Color::Rgb(142, 192, 124),
+    text: Color::Rgb(235, 219, 178),
+    text_secondary: Color::Rgb(189, 174, 147),
 };
 
 // ── Tokyo Night ─────────────────────────────────────────────────────────────
@@ -260,6 +284,8 @@ pub const PALETTE_TOKYO_NIGHT: ColorPalette = ColorPalette {
     table_header_fg: Color::Rgb(122, 162, 247),
     pin: Color::Rgb(224, 175, 104),
     accent: Color::Rgb(122, 162, 247),
+    text: Color::Rgb(192, 202, 245),
+    text_secondary: Color::Rgb(130, 140, 186),
 };
 
 // ── Catppuccin Mocha ────────────────────────────────────────────────────────
@@ -285,4 +311,222 @@ pub const PALETTE_CATPPUCCIN: ColorPalette = ColorPalette {
     table_header_fg: Color::Rgb(137, 180, 250),
     pin: Color::Rgb(249, 226, 175),
     accent: Color::Rgb(137, 180, 250),
+    text: Color::Rgb(205, 214, 244),
+    text_secondary: Color::Rgb(166, 173, 200),
+};
+
+// ── One Dark ────────────────────────────────────────────────────────────────
+
+pub const PALETTE_ONE_DARK: ColorPalette = ColorPalette {
+    name: "One Dark",
+    header_bg: Color::Rgb(40, 44, 52),
+    header_fg: Color::Rgb(171, 178, 191),
+    selected_bg: Color::Rgb(50, 56, 66),
+    selected_fg: Color::Rgb(220, 223, 228),
+    border: Color::Rgb(76, 82, 99),
+    cpu: Color::Rgb(152, 195, 121),
+    memory: Color::Rgb(229, 192, 123),
+    swap: Color::Rgb(198, 120, 221),
+    network_rx: Color::Rgb(86, 182, 194),
+    network_tx: Color::Rgb(224, 108, 117),
+    disk_read: Color::Rgb(152, 195, 121),
+    disk_write: Color::Rgb(224, 108, 117),
+    status_running: Color::Rgb(152, 195, 121),
+    status_sleeping: Color::Rgb(76, 82, 99),
+    status_stopped: Color::Rgb(224, 108, 117),
+    status_zombie: Color::Rgb(198, 120, 221),
+    table_header_fg: Color::Rgb(97, 175, 239),
+    pin: Color::Rgb(229, 192, 123),
+    accent: Color::Rgb(97, 175, 239),
+    text: Color::Rgb(171, 178, 191),
+    text_secondary: Color::Rgb(127, 132, 142),
+};
+
+// ── Everforest ──────────────────────────────────────────────────────────────
+
+pub const PALETTE_EVERFOREST: ColorPalette = ColorPalette {
+    name: "Everforest",
+    header_bg: Color::Rgb(45, 51, 48),
+    header_fg: Color::Rgb(211, 198, 170),
+    selected_bg: Color::Rgb(55, 63, 58),
+    selected_fg: Color::Rgb(211, 198, 170),
+    border: Color::Rgb(90, 101, 94),
+    cpu: Color::Rgb(167, 192, 128),
+    memory: Color::Rgb(219, 188, 127),
+    swap: Color::Rgb(214, 153, 182),
+    network_rx: Color::Rgb(131, 192, 179),
+    network_tx: Color::Rgb(230, 126, 128),
+    disk_read: Color::Rgb(167, 192, 128),
+    disk_write: Color::Rgb(230, 126, 128),
+    status_running: Color::Rgb(167, 192, 128),
+    status_sleeping: Color::Rgb(90, 101, 94),
+    status_stopped: Color::Rgb(230, 126, 128),
+    status_zombie: Color::Rgb(214, 153, 182),
+    table_header_fg: Color::Rgb(127, 187, 179),
+    pin: Color::Rgb(219, 188, 127),
+    accent: Color::Rgb(127, 187, 179),
+    text: Color::Rgb(211, 198, 170),
+    text_secondary: Color::Rgb(157, 149, 131),
+};
+
+// ── Kanagawa ────────────────────────────────────────────────────────────────
+
+pub const PALETTE_KANAGAWA: ColorPalette = ColorPalette {
+    name: "Kanagawa",
+    header_bg: Color::Rgb(34, 34, 50),
+    header_fg: Color::Rgb(220, 215, 186),
+    selected_bg: Color::Rgb(54, 54, 74),
+    selected_fg: Color::Rgb(220, 215, 186),
+    border: Color::Rgb(84, 84, 109),
+    cpu: Color::Rgb(152, 187, 108),
+    memory: Color::Rgb(226, 194, 124),
+    swap: Color::Rgb(212, 140, 181),
+    network_rx: Color::Rgb(126, 196, 193),
+    network_tx: Color::Rgb(195, 64, 67),
+    disk_read: Color::Rgb(152, 187, 108),
+    disk_write: Color::Rgb(195, 64, 67),
+    status_running: Color::Rgb(152, 187, 108),
+    status_sleeping: Color::Rgb(84, 84, 109),
+    status_stopped: Color::Rgb(195, 64, 67),
+    status_zombie: Color::Rgb(212, 140, 181),
+    table_header_fg: Color::Rgb(127, 160, 223),
+    pin: Color::Rgb(226, 194, 124),
+    accent: Color::Rgb(127, 160, 223),
+    text: Color::Rgb(220, 215, 186),
+    text_secondary: Color::Rgb(149, 146, 131),
+};
+
+// ── Rosé Pine ───────────────────────────────────────────────────────────────
+
+pub const PALETTE_ROSE_PINE: ColorPalette = ColorPalette {
+    name: "Rose Pine",
+    header_bg: Color::Rgb(31, 29, 46),
+    header_fg: Color::Rgb(224, 222, 244),
+    selected_bg: Color::Rgb(38, 35, 58),
+    selected_fg: Color::Rgb(224, 222, 244),
+    border: Color::Rgb(110, 106, 134),
+    cpu: Color::Rgb(156, 207, 216),
+    memory: Color::Rgb(246, 193, 119),
+    swap: Color::Rgb(196, 167, 231),
+    network_rx: Color::Rgb(49, 116, 143),
+    network_tx: Color::Rgb(235, 111, 146),
+    disk_read: Color::Rgb(156, 207, 216),
+    disk_write: Color::Rgb(235, 111, 146),
+    status_running: Color::Rgb(156, 207, 216),
+    status_sleeping: Color::Rgb(110, 106, 134),
+    status_stopped: Color::Rgb(235, 111, 146),
+    status_zombie: Color::Rgb(196, 167, 231),
+    table_header_fg: Color::Rgb(234, 154, 151),
+    pin: Color::Rgb(246, 193, 119),
+    accent: Color::Rgb(234, 154, 151),
+    text: Color::Rgb(224, 222, 244),
+    text_secondary: Color::Rgb(144, 140, 170),
+};
+
+// ── Synthwave '84 ───────────────────────────────────────────────────────────
+
+pub const PALETTE_SYNTHWAVE: ColorPalette = ColorPalette {
+    name: "Synthwave",
+    header_bg: Color::Rgb(36, 23, 52),
+    header_fg: Color::Rgb(255, 255, 255),
+    selected_bg: Color::Rgb(52, 34, 75),
+    selected_fg: Color::Rgb(255, 255, 255),
+    border: Color::Rgb(97, 67, 133),
+    cpu: Color::Rgb(114, 242, 114),
+    memory: Color::Rgb(255, 230, 109),
+    swap: Color::Rgb(255, 121, 198),
+    network_rx: Color::Rgb(54, 243, 243),
+    network_tx: Color::Rgb(254, 78, 149),
+    disk_read: Color::Rgb(114, 242, 114),
+    disk_write: Color::Rgb(254, 78, 149),
+    status_running: Color::Rgb(114, 242, 114),
+    status_sleeping: Color::Rgb(97, 67, 133),
+    status_stopped: Color::Rgb(254, 78, 149),
+    status_zombie: Color::Rgb(255, 121, 198),
+    table_header_fg: Color::Rgb(230, 158, 255),
+    pin: Color::Rgb(255, 230, 109),
+    accent: Color::Rgb(230, 158, 255),
+    text: Color::Rgb(255, 255, 255),
+    text_secondary: Color::Rgb(179, 157, 204),
+};
+
+// ── Ayu Dark ────────────────────────────────────────────────────────────────
+
+pub const PALETTE_AYU_DARK: ColorPalette = ColorPalette {
+    name: "Ayu Dark",
+    header_bg: Color::Rgb(15, 20, 25),
+    header_fg: Color::Rgb(203, 204, 198),
+    selected_bg: Color::Rgb(27, 35, 43),
+    selected_fg: Color::Rgb(230, 231, 226),
+    border: Color::Rgb(59, 73, 86),
+    cpu: Color::Rgb(170, 217, 76),
+    memory: Color::Rgb(255, 180, 84),
+    swap: Color::Rgb(217, 120, 252),
+    network_rx: Color::Rgb(90, 207, 227),
+    network_tx: Color::Rgb(255, 51, 51),
+    disk_read: Color::Rgb(170, 217, 76),
+    disk_write: Color::Rgb(255, 51, 51),
+    status_running: Color::Rgb(170, 217, 76),
+    status_sleeping: Color::Rgb(59, 73, 86),
+    status_stopped: Color::Rgb(255, 51, 51),
+    status_zombie: Color::Rgb(217, 120, 252),
+    table_header_fg: Color::Rgb(57, 186, 230),
+    pin: Color::Rgb(255, 180, 84),
+    accent: Color::Rgb(57, 186, 230),
+    text: Color::Rgb(203, 204, 198),
+    text_secondary: Color::Rgb(127, 133, 138),
+};
+
+// ── Material Dark ───────────────────────────────────────────────────────────
+
+pub const PALETTE_MATERIAL: ColorPalette = ColorPalette {
+    name: "Material",
+    header_bg: Color::Rgb(38, 50, 56),
+    header_fg: Color::Rgb(238, 255, 255),
+    selected_bg: Color::Rgb(55, 71, 79),
+    selected_fg: Color::Rgb(238, 255, 255),
+    border: Color::Rgb(84, 110, 122),
+    cpu: Color::Rgb(195, 232, 141),
+    memory: Color::Rgb(255, 203, 107),
+    swap: Color::Rgb(199, 146, 234),
+    network_rx: Color::Rgb(137, 221, 255),
+    network_tx: Color::Rgb(240, 113, 120),
+    disk_read: Color::Rgb(195, 232, 141),
+    disk_write: Color::Rgb(240, 113, 120),
+    status_running: Color::Rgb(195, 232, 141),
+    status_sleeping: Color::Rgb(84, 110, 122),
+    status_stopped: Color::Rgb(240, 113, 120),
+    status_zombie: Color::Rgb(199, 146, 234),
+    table_header_fg: Color::Rgb(130, 170, 255),
+    pin: Color::Rgb(255, 203, 107),
+    accent: Color::Rgb(130, 170, 255),
+    text: Color::Rgb(238, 255, 255),
+    text_secondary: Color::Rgb(144, 164, 174),
+};
+
+// ── Cyberpunk ───────────────────────────────────────────────────────────────
+
+pub const PALETTE_CYBERPUNK: ColorPalette = ColorPalette {
+    name: "Cyberpunk",
+    header_bg: Color::Rgb(20, 4, 40),
+    header_fg: Color::Rgb(0, 255, 255),
+    selected_bg: Color::Rgb(40, 10, 70),
+    selected_fg: Color::Rgb(0, 255, 255),
+    border: Color::Rgb(80, 40, 120),
+    cpu: Color::Rgb(0, 255, 136),
+    memory: Color::Rgb(255, 213, 0),
+    swap: Color::Rgb(189, 0, 255),
+    network_rx: Color::Rgb(0, 230, 255),
+    network_tx: Color::Rgb(255, 0, 102),
+    disk_read: Color::Rgb(0, 255, 136),
+    disk_write: Color::Rgb(255, 0, 102),
+    status_running: Color::Rgb(0, 255, 136),
+    status_sleeping: Color::Rgb(80, 40, 120),
+    status_stopped: Color::Rgb(255, 0, 102),
+    status_zombie: Color::Rgb(189, 0, 255),
+    table_header_fg: Color::Rgb(255, 0, 255),
+    pin: Color::Rgb(255, 213, 0),
+    accent: Color::Rgb(0, 255, 255),
+    text: Color::Rgb(230, 230, 255),
+    text_secondary: Color::Rgb(140, 120, 180),
 };
