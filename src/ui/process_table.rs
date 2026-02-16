@@ -8,10 +8,208 @@ use crate::data::process::{ProcessEntry, ProcessStatus, SortColumn};
 use crate::ui::theme;
 use crate::util::{format_bytes, format_cpu_percent, format_duration_short};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Column {
+    Pid,
+    Name,
+    User,
+    Cpu,
+    Memory,
+    Status,
+    Threads,
+    Time,
+    DiskRead,
+    DiskWrite,
+    Ppid,
+    Command,
+}
+
+impl Column {
+    pub fn all() -> &'static [Column] {
+        &[
+            Column::Pid,
+            Column::Name,
+            Column::User,
+            Column::Cpu,
+            Column::Memory,
+            Column::Status,
+            Column::Threads,
+            Column::Time,
+            Column::DiskRead,
+            Column::DiskWrite,
+            Column::Ppid,
+            Column::Command,
+        ]
+    }
+
+    pub fn header_name(&self) -> &'static str {
+        match self {
+            Column::Pid => "PID",
+            Column::Name => "Name",
+            Column::User => "User",
+            Column::Cpu => "CPU%",
+            Column::Memory => "Memory",
+            Column::Status => "Status",
+            Column::Threads => "Threads",
+            Column::Time => "Time",
+            Column::DiskRead => "Disk R",
+            Column::DiskWrite => "Disk W",
+            Column::Ppid => "PPID",
+            Column::Command => "Command",
+        }
+    }
+
+    pub fn width(&self) -> Constraint {
+        match self {
+            Column::Pid => Constraint::Length(8),
+            Column::Name => Constraint::Min(15),
+            Column::User => Constraint::Length(12),
+            Column::Cpu => Constraint::Length(8),
+            Column::Memory => Constraint::Length(10),
+            Column::Status => Constraint::Length(7),
+            Column::Threads => Constraint::Length(8),
+            Column::Time => Constraint::Length(10),
+            Column::DiskRead => Constraint::Length(10),
+            Column::DiskWrite => Constraint::Length(10),
+            Column::Ppid => Constraint::Length(8),
+            Column::Command => Constraint::Min(20),
+        }
+    }
+
+    pub fn is_required(&self) -> bool {
+        matches!(self, Column::Pid | Column::Name)
+    }
+
+    pub fn to_id(&self) -> &'static str {
+        match self {
+            Column::Pid => "pid",
+            Column::Name => "name",
+            Column::User => "user",
+            Column::Cpu => "cpu",
+            Column::Memory => "memory",
+            Column::Status => "status",
+            Column::Threads => "threads",
+            Column::Time => "time",
+            Column::DiskRead => "disk_read",
+            Column::DiskWrite => "disk_write",
+            Column::Ppid => "ppid",
+            Column::Command => "command",
+        }
+    }
+
+    pub fn from_id(s: &str) -> Option<Column> {
+        match s {
+            "pid" => Some(Column::Pid),
+            "name" => Some(Column::Name),
+            "user" => Some(Column::User),
+            "cpu" => Some(Column::Cpu),
+            "memory" => Some(Column::Memory),
+            "status" => Some(Column::Status),
+            "threads" => Some(Column::Threads),
+            "time" => Some(Column::Time),
+            "disk_read" => Some(Column::DiskRead),
+            "disk_write" => Some(Column::DiskWrite),
+            "ppid" => Some(Column::Ppid),
+            "command" => Some(Column::Command),
+            _ => None,
+        }
+    }
+
+    pub fn sort_column(&self) -> Option<SortColumn> {
+        match self {
+            Column::Pid => Some(SortColumn::Pid),
+            Column::Name => Some(SortColumn::Name),
+            Column::User => Some(SortColumn::User),
+            Column::Cpu => Some(SortColumn::Cpu),
+            Column::Memory => Some(SortColumn::Memory),
+            Column::Status => Some(SortColumn::Status),
+            Column::Threads => Some(SortColumn::Threads),
+            Column::Time => Some(SortColumn::StartTime),
+            Column::DiskRead => Some(SortColumn::DiskRead),
+            Column::DiskWrite => Some(SortColumn::DiskWrite),
+            Column::Ppid => Some(SortColumn::Ppid),
+            Column::Command => None,
+        }
+    }
+
+    /// Parse a list of column IDs, ensuring required columns are always present and first.
+    pub fn parse_list(ids: &[String]) -> Vec<Column> {
+        let mut cols: Vec<Column> = Vec::new();
+        // Always start with required columns
+        cols.push(Column::Pid);
+        cols.push(Column::Name);
+        for id in ids {
+            if let Some(col) = Column::from_id(id.as_str()) {
+                if !col.is_required() && !cols.contains(&col) {
+                    cols.push(col);
+                }
+            }
+        }
+        cols
+    }
+
+    fn cell_value(&self, p: &ProcessEntry, now: u64, is_pinned: bool) -> (String, Option<Style>) {
+        match self {
+            Column::Pid => {
+                let text = if is_pinned {
+                    format!("* {}", p.pid)
+                } else {
+                    format!("  {}", p.pid)
+                };
+                (text, None)
+            }
+            Column::Name => (p.name.clone(), None),
+            Column::User => (p.user.clone(), Some(Style::default())),
+            Column::Cpu => (format_cpu_percent(p.cpu_percent), Some(Style::default())),
+            Column::Memory => (format_bytes(p.memory_bytes), Some(Style::default())),
+            Column::Status => {
+                let style = match p.status {
+                    ProcessStatus::Running => Style::default().fg(theme::STATUS_RUNNING),
+                    ProcessStatus::Sleeping => Style::default().fg(theme::STATUS_SLEEPING),
+                    ProcessStatus::Stopped => Style::default().fg(theme::STATUS_STOPPED),
+                    ProcessStatus::Zombie => Style::default().fg(theme::STATUS_ZOMBIE),
+                    ProcessStatus::Dead => Style::default().fg(Color::DarkGray),
+                    ProcessStatus::Unknown => Style::default(),
+                };
+                (p.status.as_str().to_string(), Some(style))
+            }
+            Column::Threads => (p.thread_count.to_string(), Some(Style::default())),
+            Column::Time => {
+                let running_time = now.saturating_sub(p.start_time);
+                (format_duration_short(running_time), Some(Style::default()))
+            }
+            Column::DiskRead => (format_bytes(p.disk_read_bytes), Some(Style::default())),
+            Column::DiskWrite => (format_bytes(p.disk_write_bytes), Some(Style::default())),
+            Column::Ppid => {
+                let text = p.parent_pid.map(|pid| pid.to_string()).unwrap_or_else(|| "-".to_string());
+                (text, Some(Style::default()))
+            }
+            Column::Command => (p.command.clone(), Some(Style::default())),
+        }
+    }
+
+    fn dead_cell_value(&self, p: &ProcessEntry) -> String {
+        match self {
+            Column::Pid => format!("* {}", p.pid),
+            Column::Name => p.name.clone(),
+            Column::User => p.user.clone(),
+            Column::Cpu => "-".to_string(),
+            Column::Memory => format_bytes(p.memory_bytes),
+            Column::Status => "Dead".to_string(),
+            Column::Threads => "-".to_string(),
+            Column::Time => "-".to_string(),
+            Column::DiskRead => "-".to_string(),
+            Column::DiskWrite => "-".to_string(),
+            Column::Ppid => p.parent_pid.map(|pid| pid.to_string()).unwrap_or_else(|| "-".to_string()),
+            Column::Command => p.command.clone(),
+        }
+    }
+}
+
 pub fn draw(frame: &mut Frame, app: &App, area: Rect) {
     app.process_table_area.set(area);
 
-    let is_wide = area.width >= 100;
+    let columns = &app.visible_columns;
     let has_pins = app.process_list.has_pins();
 
     let now = std::time::SystemTime::now()
@@ -19,7 +217,7 @@ pub fn draw(frame: &mut Frame, app: &App, area: Rect) {
         .unwrap_or_default()
         .as_secs();
 
-    let (header, widths) = build_header(is_wide, app);
+    let (header, widths) = build_header(columns, app);
 
     // Build rows: pinned first, separator, then unpinned
     let mut rows: Vec<Row> = Vec::new();
@@ -27,30 +225,18 @@ pub fn draw(frame: &mut Frame, app: &App, area: Rect) {
     if has_pins {
         let pinned = app.process_list.pinned_visible();
         for p in &pinned {
-            rows.push(build_row(p, now, is_wide, true));
+            rows.push(build_row(p, now, columns, true));
         }
         // Separator row
         let sep_text = format!("── pinned: {} ──", pinned.len());
-        let sep_cells = if is_wide {
-            vec![
-                Cell::from(""),
-                Cell::from(sep_text).style(Style::default().fg(Color::DarkGray)),
-                Cell::from(""),
-                Cell::from(""),
-                Cell::from(""),
-                Cell::from(""),
-                Cell::from(""),
-                Cell::from(""),
-            ]
-        } else {
-            vec![
-                Cell::from(""),
-                Cell::from(sep_text).style(Style::default().fg(Color::DarkGray)),
-                Cell::from(""),
-                Cell::from(""),
-                Cell::from(""),
-            ]
-        };
+        let mut sep_cells: Vec<Cell> = Vec::new();
+        for (i, _) in columns.iter().enumerate() {
+            if i == 1 {
+                sep_cells.push(Cell::from(sep_text.clone()).style(Style::default().fg(Color::DarkGray)));
+            } else {
+                sep_cells.push(Cell::from(""));
+            }
+        }
         rows.push(Row::new(sep_cells).style(Style::default().fg(Color::DarkGray)));
     }
 
@@ -60,7 +246,7 @@ pub fn draw(frame: &mut Frame, app: &App, area: Rect) {
         app.process_list.visible()
     };
     for p in &unpinned {
-        rows.push(build_row(p, now, is_wide, false));
+        rows.push(build_row(p, now, columns, false));
     }
 
     // Title with process count and pin info
@@ -79,94 +265,31 @@ pub fn draw(frame: &mut Frame, app: &App, area: Rect) {
     frame.render_stateful_widget(table, area, &mut app.table_state.clone());
 }
 
-fn build_header(is_wide: bool, app: &App) -> (Row<'static>, Vec<Constraint>) {
-    if is_wide {
-        let h = Row::new([
-            column_header("PID", SortColumn::Pid, app),
-            column_header("Name", SortColumn::Name, app),
-            column_header("User", SortColumn::User, app),
-            column_header("CPU%", SortColumn::Cpu, app),
-            column_header("Memory", SortColumn::Memory, app),
-            column_header("Status", SortColumn::Status, app),
-            column_header("Threads", SortColumn::Threads, app),
-            column_header("Time", SortColumn::StartTime, app),
-        ])
-        .style(theme::table_header_style());
-        let w = vec![
-            Constraint::Length(8),
-            Constraint::Min(15),
-            Constraint::Length(12),
-            Constraint::Length(8),
-            Constraint::Length(10),
-            Constraint::Length(7),
-            Constraint::Length(8),
-            Constraint::Length(10),
-        ];
-        (h, w)
-    } else {
-        let h = Row::new([
-            column_header("PID", SortColumn::Pid, app),
-            column_header("Name", SortColumn::Name, app),
-            column_header("CPU%", SortColumn::Cpu, app),
-            column_header("Memory", SortColumn::Memory, app),
-            column_header("Status", SortColumn::Status, app),
-        ])
-        .style(theme::table_header_style());
-        let w = vec![
-            Constraint::Length(8),
-            Constraint::Min(12),
-            Constraint::Length(8),
-            Constraint::Length(10),
-            Constraint::Length(7),
-        ];
-        (h, w)
-    }
+fn build_header(columns: &[Column], app: &App) -> (Row<'static>, Vec<Constraint>) {
+    let cells: Vec<Cell> = columns
+        .iter()
+        .map(|col| {
+            if let Some(sort_col) = col.sort_column() {
+                column_header(col.header_name(), sort_col, app)
+            } else {
+                Cell::from(col.header_name().to_string())
+            }
+        })
+        .collect();
+    let widths: Vec<Constraint> = columns.iter().map(|col| col.width()).collect();
+    (Row::new(cells).style(theme::table_header_style()), widths)
 }
 
-fn build_row(p: &ProcessEntry, now: u64, is_wide: bool, is_pinned: bool) -> Row<'static> {
-    let running_time = now.saturating_sub(p.start_time);
-
+fn build_row(p: &ProcessEntry, now: u64, columns: &[Column], is_pinned: bool) -> Row<'static> {
     // Dead pinned processes get a faded gray style
     if p.is_dead {
         let dead_style = Style::default().fg(Color::DarkGray);
-        let pid_prefix = format!("* {}", p.pid);
-
-        return if is_wide {
-            Row::new(vec![
-                Cell::from(pid_prefix).style(dead_style),
-                Cell::from(p.name.clone()).style(dead_style),
-                Cell::from(p.user.clone()).style(dead_style),
-                Cell::from("-").style(dead_style),
-                Cell::from(format_bytes(p.memory_bytes)).style(dead_style),
-                Cell::from("Dead").style(dead_style),
-                Cell::from("-").style(dead_style),
-                Cell::from("-").style(dead_style),
-            ])
-        } else {
-            Row::new(vec![
-                Cell::from(pid_prefix).style(dead_style),
-                Cell::from(p.name.clone()).style(dead_style),
-                Cell::from("-").style(dead_style),
-                Cell::from(format_bytes(p.memory_bytes)).style(dead_style),
-                Cell::from("Dead").style(dead_style),
-            ])
-        };
+        let cells: Vec<Cell> = columns
+            .iter()
+            .map(|col| Cell::from(col.dead_cell_value(p)).style(dead_style))
+            .collect();
+        return Row::new(cells);
     }
-
-    let status_style = match p.status {
-        ProcessStatus::Running => Style::default().fg(theme::STATUS_RUNNING),
-        ProcessStatus::Sleeping => Style::default().fg(theme::STATUS_SLEEPING),
-        ProcessStatus::Stopped => Style::default().fg(theme::STATUS_STOPPED),
-        ProcessStatus::Zombie => Style::default().fg(theme::STATUS_ZOMBIE),
-        ProcessStatus::Dead => Style::default().fg(Color::DarkGray),
-        ProcessStatus::Unknown => Style::default(),
-    };
-
-    let pid_prefix = if is_pinned {
-        format!("* {}", p.pid)
-    } else {
-        format!("  {}", p.pid)
-    };
 
     let row_style = if is_pinned {
         Style::default().fg(Color::Yellow)
@@ -174,26 +297,21 @@ fn build_row(p: &ProcessEntry, now: u64, is_wide: bool, is_pinned: bool) -> Row<
         Style::default()
     };
 
-    if is_wide {
-        Row::new(vec![
-            Cell::from(pid_prefix).style(row_style),
-            Cell::from(p.name.clone()).style(row_style),
-            Cell::from(p.user.clone()),
-            Cell::from(format_cpu_percent(p.cpu_percent)),
-            Cell::from(format_bytes(p.memory_bytes)),
-            Cell::from(p.status.as_str()).style(status_style),
-            Cell::from(p.thread_count.to_string()),
-            Cell::from(format_duration_short(running_time)),
-        ])
-    } else {
-        Row::new(vec![
-            Cell::from(pid_prefix).style(row_style),
-            Cell::from(p.name.clone()).style(row_style),
-            Cell::from(format_cpu_percent(p.cpu_percent)),
-            Cell::from(format_bytes(p.memory_bytes)),
-            Cell::from(p.status.as_str()).style(status_style),
-        ])
-    }
+    let cells: Vec<Cell> = columns
+        .iter()
+        .map(|col| {
+            let (text, style_override) = col.cell_value(p, now, is_pinned);
+            match col {
+                Column::Pid | Column::Name => Cell::from(text).style(row_style),
+                Column::Status => {
+                    Cell::from(text).style(style_override.unwrap_or_default())
+                }
+                _ => Cell::from(text),
+            }
+        })
+        .collect();
+
+    Row::new(cells)
 }
 
 fn build_title(app: &App, has_pins: bool) -> String {

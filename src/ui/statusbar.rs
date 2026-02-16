@@ -50,7 +50,7 @@ pub fn draw(frame: &mut Frame, app: &App, area: Rect) {
                     Span::raw("Hide "),
                     Span::styled("[v]", Style::default().fg(Color::Cyan)),
                     Span::raw("Hidden "),
-                    Span::styled("[1-8]", Style::default().fg(Color::Cyan)),
+                    Span::styled("[1-0]", Style::default().fg(Color::Cyan)),
                     Span::raw("Sort "),
                     Span::styled("[n]", Style::default().fg(Color::Cyan)),
                     Span::raw("New "),
@@ -96,6 +96,9 @@ fn sort_indicator(app: &App) -> String {
         SortColumn::Status => "Status",
         SortColumn::Threads => "Threads",
         SortColumn::StartTime => "Time",
+        SortColumn::DiskRead => "Disk R",
+        SortColumn::DiskWrite => "Disk W",
+        SortColumn::Ppid => "PPID",
     };
     let arrow = if app.process_list.sort_ascending {
         "▲"

@@ -28,8 +28,8 @@ pub fn draw(frame: &mut Frame) {
         Line::from(""),
         Line::from(Span::styled("Sorting", bold)),
         Line::from(vec![
-            Span::styled("  1-8 / F1-F8", key_style),
-            Span::raw("Sort by column"),
+            Span::styled("  1-0 / F1-F11", key_style),
+            Span::raw("Sort by column (0=Disk W, F11=PPID)"),
         ]),
         Line::from(vec![
             Span::styled("  r          ", key_style),

@@ -12,6 +12,7 @@ use crate::data::sysinfo_detail::SystemInfoDetail;
 use crate::data::process::{ProcessList, SortColumn};
 use crate::event::{Event, EventHandler};
 use crate::input;
+use crate::ui::process_table::Column;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ViewMode {
@@ -124,6 +125,7 @@ pub struct App {
     pub search_query: String,
     pub new_process_input: String,
     pub config: Config,
+    pub visible_columns: Vec<Column>,
     pub status_message: Option<String>,
     status_message_ttl: u8,
     pub settings_state: Option<SettingsState>,
@@ -147,6 +149,8 @@ impl App {
         let sort_column = config.parse_sort_column();
         let sort_ascending = config.sort_ascending;
 
+        let visible_columns = Column::parse_list(&config.visible_columns);
+
         let mut process_list = ProcessList::new();
         process_list.set_sort(sort_column, sort_ascending);
 
@@ -162,6 +166,7 @@ impl App {
             table_state: TableState::default().with_selected(0),
             search_query: String::new(),
             new_process_input: String::new(),
+            visible_columns,
             status_message: None,
             status_message_ttl: 0,
             settings_state: None,
@@ -855,13 +860,16 @@ impl App {
             "status".to_string(),
             "threads".to_string(),
             "time".to_string(),
+            "disk_read".to_string(),
+            "disk_write".to_string(),
+            "ppid".to_string(),
         ];
         let sort_idx = sort_options
             .iter()
             .position(|s| s == &self.config.sort_column)
             .unwrap_or(3);
 
-        let items = vec![
+        let mut items = vec![
             SettingsItem::Slider {
                 label: "Refresh Rate".to_string(),
                 value: self.config.tick_rate_ms,
@@ -903,19 +911,32 @@ impl App {
                 label: "Keep Dead Pins".to_string(),
                 value: self.config.keep_dead_pins,
             },
-            SettingsItem::Action {
-                label: "Register to PATH".to_string(),
-                description: "Add prc to system PATH".to_string(),
-            },
-            SettingsItem::Action {
-                label: "Create Desktop Shortcut".to_string(),
-                description: "Create shortcut on desktop".to_string(),
-            },
-            SettingsItem::Action {
-                label: "Save & Close".to_string(),
-                description: "Save settings to config file".to_string(),
-            },
         ];
+
+        // Column toggles for optional columns
+        for col in Column::all() {
+            if col.is_required() {
+                continue;
+            }
+            let enabled = self.visible_columns.contains(col);
+            items.push(SettingsItem::Toggle {
+                label: format!("Column: {}", col.header_name()),
+                value: enabled,
+            });
+        }
+
+        items.push(SettingsItem::Action {
+            label: "Register to PATH".to_string(),
+            description: "Add prc to system PATH".to_string(),
+        });
+        items.push(SettingsItem::Action {
+            label: "Create Desktop Shortcut".to_string(),
+            description: "Create shortcut on desktop".to_string(),
+        });
+        items.push(SettingsItem::Action {
+            label: "Save & Close".to_string(),
+            description: "Save settings to config file".to_string(),
+        });
 
         self.settings_state = Some(SettingsState {
             selected: 0,
@@ -1018,6 +1039,8 @@ impl App {
     fn apply_settings(&mut self) {
         if let Some(state) = self.settings_state.take() {
             let old_tick_rate = self.config.tick_rate_ms;
+            // Collect column toggles
+            let mut new_columns: Vec<Column> = vec![Column::Pid, Column::Name];
             for item in &state.items {
                 match item {
                     SettingsItem::Slider { label, value, .. } => match label.as_str() {
@@ -1031,7 +1054,20 @@ impl App {
                         "Bold Headers" => self.config.theme.bold_headers = *value,
                         "Standalone Window" => self.config.standalone_window = *value,
                         "Keep Dead Pins" => self.config.keep_dead_pins = *value,
-                        _ => {}
+                        _ => {
+                            // Handle "Column: XYZ" toggles
+                            if let Some(col_name) = label.strip_prefix("Column: ") {
+                                if *value {
+                                    // Find the Column by header name
+                                    for col in Column::all() {
+                                        if col.header_name() == col_name && !col.is_required() {
+                                            new_columns.push(*col);
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     },
                     SettingsItem::Cycle {
                         label,
@@ -1045,6 +1081,10 @@ impl App {
                     SettingsItem::Action { .. } => {}
                 }
             }
+
+            // Update visible columns
+            self.visible_columns = new_columns;
+            self.config.visible_columns = self.visible_columns.iter().map(|c| c.to_id().to_string()).collect();
 
             // Apply tick rate change at runtime
             if self.config.tick_rate_ms != old_tick_rate {

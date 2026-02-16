@@ -29,7 +29,8 @@ impl DataCollector {
                         .with_cpu()
                         .with_memory()
                         .with_disk_usage()
-                        .with_user(UpdateKind::OnlyIfNotSet),
+                        .with_user(UpdateKind::OnlyIfNotSet)
+                        .with_exe(UpdateKind::OnlyIfNotSet),
                 ),
         );
 
@@ -55,7 +56,8 @@ impl DataCollector {
             ProcessRefreshKind::nothing()
                 .with_cpu()
                 .with_memory()
-                .with_disk_usage(),
+                .with_disk_usage()
+                .with_exe(UpdateKind::OnlyIfNotSet),
         );
         self.networks.refresh(true);
 
@@ -120,6 +122,8 @@ impl DataCollector {
                     disk_read_bytes: p.disk_usage().read_bytes,
                     disk_write_bytes: p.disk_usage().written_bytes,
                     start_time: p.start_time(),
+                    parent_pid: p.parent().map(|pid| pid.as_u32()),
+                    command: p.exe().map(|e| e.to_string_lossy().into_owned()).unwrap_or_default(),
                     is_dead: false,
                 }
             })

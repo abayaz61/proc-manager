@@ -35,6 +35,9 @@ pub enum SortColumn {
     Status,
     Threads,
     StartTime,
+    DiskRead,
+    DiskWrite,
+    Ppid,
 }
 
 #[derive(Debug, Clone)]
@@ -49,6 +52,8 @@ pub struct ProcessEntry {
     pub disk_read_bytes: u64,
     pub disk_write_bytes: u64,
     pub start_time: u64,
+    pub parent_pid: Option<u32>,
+    pub command: String,
     pub is_dead: bool,
 }
 
@@ -485,6 +490,9 @@ impl ProcessList {
                 SortColumn::Status => a.status.as_str().cmp(b.status.as_str()),
                 SortColumn::Threads => a.thread_count.cmp(&b.thread_count),
                 SortColumn::StartTime => a.start_time.cmp(&b.start_time),
+                SortColumn::DiskRead => a.disk_read_bytes.cmp(&b.disk_read_bytes),
+                SortColumn::DiskWrite => a.disk_write_bytes.cmp(&b.disk_write_bytes),
+                SortColumn::Ppid => a.parent_pid.unwrap_or(0).cmp(&b.parent_pid.unwrap_or(0)),
             };
             if ascending {
                 ord

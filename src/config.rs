@@ -11,7 +11,7 @@ pub struct Cli {
     #[arg(short = 't', long, default_value_t = 1000)]
     pub tick_rate: u64,
 
-    /// Default sort column (pid, name, user, cpu, memory, status, threads, time)
+    /// Default sort column (pid, name, user, cpu, memory, status, threads, time, disk_read, disk_write, ppid)
     #[arg(short, long, default_value = "cpu")]
     pub sort: String,
 
@@ -48,6 +48,9 @@ pub struct Config {
     #[serde(default)]
     pub keep_dead_pins: bool,
 
+    #[serde(default = "default_columns")]
+    pub visible_columns: Vec<String>,
+
     #[serde(default)]
     pub theme: ThemeConfig,
 }
@@ -82,6 +85,18 @@ fn default_history_len() -> usize {
 fn default_true() -> bool {
     true
 }
+fn default_columns() -> Vec<String> {
+    vec![
+        "pid".to_string(),
+        "name".to_string(),
+        "user".to_string(),
+        "cpu".to_string(),
+        "memory".to_string(),
+        "status".to_string(),
+        "threads".to_string(),
+        "time".to_string(),
+    ]
+}
 
 impl Default for Config {
     fn default() -> Self {
@@ -92,6 +107,7 @@ impl Default for Config {
             history_len: default_history_len(),
             standalone_window: true,
             keep_dead_pins: false,
+            visible_columns: default_columns(),
             theme: ThemeConfig::default(),
         }
     }
@@ -141,6 +157,9 @@ impl Config {
             "status" => SortColumn::Status,
             "threads" => SortColumn::Threads,
             "time" | "start" => SortColumn::StartTime,
+            "disk_read" | "diskread" => SortColumn::DiskRead,
+            "disk_write" | "diskwrite" => SortColumn::DiskWrite,
+            "ppid" | "parent" => SortColumn::Ppid,
             _ => SortColumn::Cpu,
         }
     }
