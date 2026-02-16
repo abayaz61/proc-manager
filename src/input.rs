@@ -24,6 +24,7 @@ pub fn map_key(key: KeyEvent, mode: AppMode) -> Action {
         AppMode::Settings => map_settings(key),
         AppMode::ContextMenu => map_context_menu(key),
         AppMode::HiddenList => map_hidden_list(key),
+        AppMode::ThemePicker => map_theme_picker(key),
     }
 }
 
@@ -60,6 +61,7 @@ fn map_normal(key: KeyEvent) -> Action {
         KeyCode::F(11) => Action::SortBy(SortColumn::Ppid),
         KeyCode::Tab => Action::CycleViewMode,
         KeyCode::Char('d') => Action::ToggleCompactView,
+        KeyCode::Char('t') => Action::OpenThemePicker,
         _ => Action::Noop,
     }
 }
@@ -129,6 +131,16 @@ fn map_new_process(key: KeyEvent) -> Action {
         KeyCode::Enter => Action::SubmitNewProcess,
         KeyCode::Backspace => Action::NewProcessBackspace,
         KeyCode::Char(c) => Action::NewProcessInput(c),
+        _ => Action::Noop,
+    }
+}
+
+fn map_theme_picker(key: KeyEvent) -> Action {
+    match key.code {
+        KeyCode::Esc | KeyCode::Char('t') => Action::CancelDialog,
+        KeyCode::Up | KeyCode::Char('k') => Action::ThemePickerUp,
+        KeyCode::Down | KeyCode::Char('j') => Action::ThemePickerDown,
+        KeyCode::Enter => Action::ThemePickerSelect,
         _ => Action::Noop,
     }
 }

@@ -13,6 +13,7 @@ use crate::data::process::{ProcessList, SortColumn};
 use crate::event::{Event, EventHandler};
 use crate::input;
 use crate::ui::process_table::Column;
+use crate::ui::theme::ColorPalette;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ViewMode {
@@ -55,6 +56,7 @@ pub enum AppMode {
     Settings,
     ContextMenu,
     HiddenList,
+    ThemePicker,
 }
 
 #[derive(Debug, Clone)]
@@ -120,6 +122,8 @@ pub struct App {
     pub mode: AppMode,
     pub view_mode: ViewMode,
     pub compact_view: bool,
+    pub palette: ColorPalette,
+    pub theme_picker_selected: usize,
     pub collector: DataCollector,
     pub process_list: ProcessList,
     pub table_state: TableState,
@@ -160,11 +164,18 @@ impl App {
         process_list.load_persisted_state(persisted.pinned_set(), persisted.hidden_set());
 
         let compact_view = config.compact_view;
+        let palette = crate::ui::theme::by_name(&config.theme.theme_name);
+        let theme_picker_selected = crate::ui::theme::ALL_PALETTES
+            .iter()
+            .position(|p| p.name == palette.name)
+            .unwrap_or(0);
 
         Self {
             mode: AppMode::Normal,
             view_mode: ViewMode::Default,
             compact_view,
+            palette,
+            theme_picker_selected,
             collector: DataCollector::new(),
             process_list,
             table_state: TableState::default().with_selected(0),
@@ -314,6 +325,10 @@ impl App {
                     self.set_status(format!("Compact view: {}", label));
                     return;
                 }
+                Action::OpenThemePicker => {
+                    self.open_theme_picker();
+                    return;
+                }
                 _ => return,
             }
         }
@@ -341,6 +356,7 @@ impl App {
                 if self.mode == AppMode::ContextMenu {
                     self.context_menu = None;
                 }
+                // ThemePicker just closes, no special cleanup needed
                 self.mode = AppMode::Normal;
                 self.status_message = None;
             }
@@ -382,6 +398,10 @@ impl App {
                 let label = if self.compact_view { "ON" } else { "OFF" };
                 self.set_status(format!("Compact view: {}", label));
             }
+            Action::OpenThemePicker => self.open_theme_picker(),
+            Action::ThemePickerUp => self.theme_picker_navigate(-1),
+            Action::ThemePickerDown => self.theme_picker_navigate(1),
+            Action::ThemePickerSelect => self.theme_picker_select(),
             Action::Noop => {}
         }
     }
@@ -947,6 +967,10 @@ impl App {
         }
 
         items.push(SettingsItem::Action {
+            label: "Change Theme".to_string(),
+            description: format!("Current: {}", self.palette.name),
+        });
+        items.push(SettingsItem::Action {
             label: "Register to PATH".to_string(),
             description: "Add prc to system PATH".to_string(),
         });
@@ -1031,6 +1055,12 @@ impl App {
                 SettingsItem::Action { label, .. } => {
                     let label = label.clone();
                     match label.as_str() {
+                        "Change Theme" => {
+                            // Close settings and open theme picker
+                            self.settings_state = None;
+                            self.open_theme_picker();
+                            return;
+                        }
                         "Register to PATH" => {
                             let result = register_to_path();
                             state.status = Some(result);
@@ -1126,6 +1156,34 @@ impl App {
             }
         }
         self.mode = AppMode::Normal;
+    }
+
+    fn open_theme_picker(&mut self) {
+        self.theme_picker_selected = crate::ui::theme::ALL_PALETTES
+            .iter()
+            .position(|p| p.name == self.palette.name)
+            .unwrap_or(0);
+        self.mode = AppMode::ThemePicker;
+    }
+
+    fn theme_picker_navigate(&mut self, delta: i32) {
+        let count = crate::ui::theme::ALL_PALETTES.len();
+        if delta < 0 {
+            self.theme_picker_selected = self.theme_picker_selected.saturating_sub(1);
+        } else {
+            self.theme_picker_selected = (self.theme_picker_selected + 1).min(count - 1);
+        }
+    }
+
+    fn theme_picker_select(&mut self) {
+        let palette = crate::ui::theme::ALL_PALETTES[self.theme_picker_selected];
+        self.palette = palette;
+        self.config.theme.theme_name = palette.name.to_string();
+        self.mode = AppMode::Normal;
+        match self.config.save() {
+            Ok(_) => self.set_status(format!("Theme: {}", palette.name)),
+            Err(e) => self.set_status(format!("Theme set but save failed: {}", e)),
+        }
     }
 
     pub fn selected_process(&self) -> Option<&crate::data::process::ProcessEntry> {

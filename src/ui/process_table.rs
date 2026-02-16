@@ -5,7 +5,7 @@ use ratatui::Frame;
 
 use crate::app::App;
 use crate::data::process::{ProcessEntry, ProcessStatus, SortColumn};
-use crate::ui::theme;
+use crate::ui::theme::ColorPalette;
 use crate::util::{format_bytes, format_cpu_percent, format_duration_short};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -148,7 +148,7 @@ impl Column {
         cols
     }
 
-    fn cell_value(&self, p: &ProcessEntry, now: u64, is_pinned: bool) -> (String, Option<Style>) {
+    fn cell_value(&self, p: &ProcessEntry, now: u64, is_pinned: bool, palette: &ColorPalette) -> (String, Option<Style>) {
         match self {
             Column::Pid => {
                 let text = if is_pinned {
@@ -164,10 +164,10 @@ impl Column {
             Column::Memory => (format_bytes(p.memory_bytes), Some(Style::default())),
             Column::Status => {
                 let style = match p.status {
-                    ProcessStatus::Running => Style::default().fg(theme::STATUS_RUNNING),
-                    ProcessStatus::Sleeping => Style::default().fg(theme::STATUS_SLEEPING),
-                    ProcessStatus::Stopped => Style::default().fg(theme::STATUS_STOPPED),
-                    ProcessStatus::Zombie => Style::default().fg(theme::STATUS_ZOMBIE),
+                    ProcessStatus::Running => Style::default().fg(palette.status_running),
+                    ProcessStatus::Sleeping => Style::default().fg(palette.status_sleeping),
+                    ProcessStatus::Stopped => Style::default().fg(palette.status_stopped),
+                    ProcessStatus::Zombie => Style::default().fg(palette.status_zombie),
                     ProcessStatus::Dead => Style::default().fg(Color::DarkGray),
                     ProcessStatus::Unknown => Style::default(),
                 };
@@ -237,7 +237,7 @@ pub fn draw(frame: &mut Frame, app: &App, area: Rect) {
     if has_pins {
         let pinned = app.process_list.pinned_visible();
         for p in &pinned {
-            rows.push(build_row(p, now, columns, true));
+            rows.push(build_row(p, now, columns, true, &app.palette));
         }
         // Separator row
         let sep_text = format!("── pinned: {} ──", pinned.len());
@@ -258,7 +258,7 @@ pub fn draw(frame: &mut Frame, app: &App, area: Rect) {
         app.process_list.visible()
     };
     for p in &unpinned {
-        rows.push(build_row(p, now, columns, false));
+        rows.push(build_row(p, now, columns, false, &app.palette));
     }
 
     // Title with process count and pin info
@@ -270,9 +270,9 @@ pub fn draw(frame: &mut Frame, app: &App, area: Rect) {
             Block::default()
                 .title(title)
                 .borders(Borders::ALL)
-                .border_style(theme::border_style()),
+                .border_style(app.palette.border_style()),
         )
-        .row_highlight_style(theme::selected_style());
+        .row_highlight_style(app.palette.selected_style());
 
     frame.render_stateful_widget(table, area, &mut app.table_state.clone());
 }
@@ -289,10 +289,10 @@ fn build_header(columns: &[Column], app: &App) -> (Row<'static>, Vec<Constraint>
         })
         .collect();
     let widths: Vec<Constraint> = columns.iter().map(|col| col.width()).collect();
-    (Row::new(cells).style(theme::table_header_style()), widths)
+    (Row::new(cells).style(app.palette.table_header_style()), widths)
 }
 
-fn build_row(p: &ProcessEntry, now: u64, columns: &[Column], is_pinned: bool) -> Row<'static> {
+fn build_row(p: &ProcessEntry, now: u64, columns: &[Column], is_pinned: bool, palette: &ColorPalette) -> Row<'static> {
     // Dead pinned processes get a faded gray style
     if p.is_dead {
         let dead_style = Style::default().fg(Color::DarkGray);
@@ -304,7 +304,7 @@ fn build_row(p: &ProcessEntry, now: u64, columns: &[Column], is_pinned: bool) ->
     }
 
     let row_style = if is_pinned {
-        Style::default().fg(Color::Yellow)
+        Style::default().fg(palette.pin)
     } else {
         Style::default()
     };
@@ -312,7 +312,7 @@ fn build_row(p: &ProcessEntry, now: u64, columns: &[Column], is_pinned: bool) ->
     let cells: Vec<Cell> = columns
         .iter()
         .map(|col| {
-            let (text, style_override) = col.cell_value(p, now, is_pinned);
+            let (text, style_override) = col.cell_value(p, now, is_pinned, palette);
             match col {
                 Column::Pid | Column::Name => Cell::from(text).style(row_style),
                 Column::Status => {
@@ -368,8 +368,8 @@ fn column_header(name: &str, col: SortColumn, app: &App) -> Cell<'static> {
         };
         Cell::from(format!("{}{}", name, arrow)).style(
             Style::default()
-                .fg(Color::Yellow)
-                .bg(Color::DarkGray)
+                .fg(app.palette.table_header_fg)
+                .bg(app.palette.selected_bg)
                 .add_modifier(Modifier::BOLD),
         )
     } else {

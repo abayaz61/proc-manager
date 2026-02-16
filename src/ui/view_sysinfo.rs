@@ -5,7 +5,7 @@ use ratatui::widgets::{Block, Borders, Paragraph};
 use ratatui::Frame;
 
 use crate::app::App;
-use crate::ui::theme;
+use crate::ui::theme::ColorPalette;
 use crate::util::{format_bytes, format_duration_short};
 
 pub fn draw(frame: &mut Frame, app: &App, area: Rect) {
@@ -49,11 +49,11 @@ fn label_value_line(label: &str, value: &str) -> Line<'static> {
     ])
 }
 
-fn section_block(title: &str) -> Block<'static> {
+fn section_block(title: &str, palette: &ColorPalette) -> Block<'static> {
     Block::default()
         .title(format!(" {} ", title))
         .borders(Borders::ALL)
-        .border_style(theme::border_style())
+        .border_style(palette.border_style())
 }
 
 fn draw_os_section(frame: &mut Frame, app: &App, area: Rect) {
@@ -70,7 +70,7 @@ fn draw_os_section(frame: &mut Frame, app: &App, area: Rect) {
         label_value_line("Uptime:", &format_duration_short(sys.uptime)),
     ];
 
-    let block = section_block("Operating System");
+    let block = section_block("Operating System", &app.palette);
     let paragraph = Paragraph::new(text).block(block);
     frame.render_widget(paragraph, area);
 }
@@ -91,7 +91,7 @@ fn draw_cpu_section(frame: &mut Frame, app: &App, area: Rect) {
         cpu_usage_bar(sys.global_cpu_usage),
     ];
 
-    let block = section_block("CPU");
+    let block = section_block("CPU", &app.palette);
     let paragraph = Paragraph::new(text).block(block);
     frame.render_widget(paragraph, area);
 }
@@ -149,7 +149,7 @@ fn draw_memory_section(frame: &mut Frame, app: &App, area: Rect) {
         label_value_line("Used Swap:", &format!("{} ({:.1}%)", format_bytes(sys.used_swap), swap_pct)),
     ];
 
-    let block = section_block("Memory");
+    let block = section_block("Memory", &app.palette);
     let paragraph = Paragraph::new(text).block(block);
     frame.render_widget(paragraph, area);
 }
@@ -166,7 +166,7 @@ fn draw_bios_section(frame: &mut Frame, app: &App, area: Rect) {
         label_value_line("System Product:", &info.system_product),
     ];
 
-    let block = section_block("BIOS / Firmware");
+    let block = section_block("BIOS / Firmware", &app.palette);
     let paragraph = Paragraph::new(text).block(block);
     frame.render_widget(paragraph, area);
 }
@@ -182,7 +182,7 @@ fn draw_board_section(frame: &mut Frame, app: &App, area: Rect) {
         label_value_line("System Family:", &info.system_family),
     ];
 
-    let block = section_block("Motherboard");
+    let block = section_block("Motherboard", &app.palette);
     let paragraph = Paragraph::new(text).block(block);
     frame.render_widget(paragraph, area);
 }
@@ -198,7 +198,7 @@ fn draw_runtime_section(frame: &mut Frame, app: &App, area: Rect) {
         label_value_line("Hidden:", &hidden_count.to_string()),
     ];
 
-    let block = section_block("Runtime");
+    let block = section_block("Runtime", &app.palette);
     let paragraph = Paragraph::new(text).block(block);
     frame.render_widget(paragraph, area);
 }

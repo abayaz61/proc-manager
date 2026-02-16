@@ -12,6 +12,7 @@ pub mod process_table;
 pub mod settings;
 pub mod statusbar;
 pub mod theme;
+pub mod theme_picker;
 pub mod view_overview;
 pub mod view_percpu;
 pub mod view_resource_graphs;
@@ -25,7 +26,7 @@ use layout::AppLayout;
 pub fn draw(frame: &mut Frame, app: &App) {
     let layout = AppLayout::new(frame.area(), app.view_mode, app.compact_view);
 
-    header::draw(frame, &app.collector.system_data, layout.header);
+    header::draw(frame, app, layout.header);
 
     match app.view_mode {
         ViewMode::Default => {
@@ -65,6 +66,7 @@ pub fn draw(frame: &mut Frame, app: &App) {
         crate::app::AppMode::Settings => settings::draw(frame, app),
         crate::app::AppMode::ContextMenu => context_menu::draw(frame, app),
         crate::app::AppMode::HiddenList => hidden_list::draw(frame, app),
+        crate::app::AppMode::ThemePicker => theme_picker::draw(frame, app),
         _ => {}
     }
 }

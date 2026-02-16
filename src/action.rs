@@ -43,5 +43,9 @@ pub enum Action {
     SettingsSave,
     CycleViewMode,
     ToggleCompactView,
+    OpenThemePicker,
+    ThemePickerUp,
+    ThemePickerDown,
+    ThemePickerSelect,
     Noop,
 }

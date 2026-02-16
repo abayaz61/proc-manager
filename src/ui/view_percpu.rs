@@ -4,7 +4,6 @@ use ratatui::widgets::{Bar, BarChart, BarGroup, Block, Borders, Gauge};
 use ratatui::Frame;
 
 use crate::app::App;
-use crate::ui::theme;
 use crate::util::format_bytes;
 
 pub fn draw(frame: &mut Frame, app: &App, area: Rect) {
@@ -16,16 +15,17 @@ pub fn draw(frame: &mut Frame, app: &App, area: Rect) {
         .split(area);
 
     draw_global_gauges(frame, app, chunks[0]);
-    draw_per_cpu_bars(frame, sys.cpu_usage.as_slice(), chunks[1]);
+    draw_per_cpu_bars(frame, app, sys.cpu_usage.as_slice(), chunks[1]);
 }
 
 fn draw_global_gauges(frame: &mut Frame, app: &App, area: Rect) {
     let sys = &app.collector.system_data;
+    let p = &app.palette;
 
     let block = Block::default()
         .title(" System ")
         .borders(Borders::ALL)
-        .border_style(theme::border_style());
+        .border_style(p.border_style());
 
     let inner = block.inner(area);
     frame.render_widget(block, area);
@@ -42,7 +42,7 @@ fn draw_global_gauges(frame: &mut Frame, app: &App, area: Rect) {
     // CPU gauge
     let cpu = sys.global_cpu_usage;
     let cpu_gauge = Gauge::default()
-        .gauge_style(Style::default().fg(theme::CPU_COLOR))
+        .gauge_style(Style::default().fg(p.cpu))
         .percent(cpu.min(100.0) as u16)
         .label(format!("CPU {:.1}%", cpu));
     frame.render_widget(cpu_gauge, cols[0]);
@@ -54,7 +54,7 @@ fn draw_global_gauges(frame: &mut Frame, app: &App, area: Rect) {
         0
     };
     let ram_gauge = Gauge::default()
-        .gauge_style(Style::default().fg(theme::MEMORY_COLOR))
+        .gauge_style(Style::default().fg(p.memory))
         .percent(ram_pct.min(100))
         .label(format!(
             "RAM {}/{}",
@@ -70,7 +70,7 @@ fn draw_global_gauges(frame: &mut Frame, app: &App, area: Rect) {
         0
     };
     let swap_gauge = Gauge::default()
-        .gauge_style(Style::default().fg(theme::SWAP_COLOR))
+        .gauge_style(Style::default().fg(p.swap))
         .percent(swap_pct.min(100))
         .label(format!(
             "SWP {}/{}",
@@ -80,11 +80,11 @@ fn draw_global_gauges(frame: &mut Frame, app: &App, area: Rect) {
     frame.render_widget(swap_gauge, cols[2]);
 }
 
-fn draw_per_cpu_bars(frame: &mut Frame, cpu_usage: &[f32], area: Rect) {
+fn draw_per_cpu_bars(frame: &mut Frame, app: &App, cpu_usage: &[f32], area: Rect) {
     let block = Block::default()
         .title(" Per-CPU Usage ")
         .borders(Borders::ALL)
-        .border_style(theme::border_style());
+        .border_style(app.palette.border_style());
 
     let bars: Vec<Bar> = cpu_usage
         .iter()

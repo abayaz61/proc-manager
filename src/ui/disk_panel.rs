@@ -1,18 +1,19 @@
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
-use ratatui::style::{Color, Style};
+use ratatui::style::Style;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, Paragraph, Sparkline};
 use ratatui::Frame;
 
 use crate::app::App;
-use crate::ui::theme;
 use crate::util::format_bytes_rate;
 
 pub fn draw(frame: &mut Frame, app: &App, area: Rect) {
+    let p = &app.palette;
+
     let block = Block::default()
         .title(" Disk I/O ")
         .borders(Borders::ALL)
-        .border_style(theme::border_style());
+        .border_style(p.border_style());
 
     let inner = block.inner(area);
     frame.render_widget(block, area);
@@ -34,12 +35,12 @@ pub fn draw(frame: &mut Frame, app: &App, area: Rect) {
     let info = Line::from(vec![
         Span::styled(
             format!("R {}", format_bytes_rate(total_read)),
-            Style::default().fg(Color::Green),
+            Style::default().fg(p.disk_read),
         ),
         Span::raw("  "),
         Span::styled(
             format!("W {}", format_bytes_rate(total_write)),
-            Style::default().fg(Color::Red),
+            Style::default().fg(p.disk_write),
         ),
     ]);
     frame.render_widget(Paragraph::new(info), chunks[0]);
@@ -47,6 +48,6 @@ pub fn draw(frame: &mut Frame, app: &App, area: Rect) {
     let data = app.disk_read_history_sparkline();
     let sparkline = Sparkline::default()
         .data(&data)
-        .style(Style::default().fg(Color::Green));
+        .style(Style::default().fg(p.disk_read));
     frame.render_widget(sparkline, chunks[1]);
 }

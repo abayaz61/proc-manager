@@ -4,25 +4,27 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
 use ratatui::Frame;
 
-use crate::data::system::SystemData;
-use crate::ui::theme;
+use crate::app::App;
 use crate::util::format_duration_short;
 
-pub fn draw(frame: &mut Frame, sys: &SystemData, area: Rect) {
+pub fn draw(frame: &mut Frame, app: &App, area: Rect) {
+    let sys = &app.collector.system_data;
+    let p = &app.palette;
+
     let uptime = format_duration_short(sys.uptime);
     let now = chrono_free_time();
 
     let line = Line::from(vec![
-        Span::styled(" proc-manager v0.1.0", Style::default().fg(theme::HEADER_FG)),
+        Span::styled(" proc-manager v0.1.0", Style::default().fg(p.header_fg)),
         Span::raw("   "),
-        Span::styled(&sys.hostname, Style::default().fg(theme::HEADER_FG)),
+        Span::styled(&sys.hostname, Style::default().fg(p.header_fg)),
         Span::raw("   "),
-        Span::styled(format!("Up: {}", uptime), Style::default().fg(theme::HEADER_FG)),
+        Span::styled(format!("Up: {}", uptime), Style::default().fg(p.header_fg)),
         Span::raw("   "),
-        Span::styled(now, Style::default().fg(theme::HEADER_FG)),
+        Span::styled(now, Style::default().fg(p.header_fg)),
     ]);
 
-    let paragraph = Paragraph::new(line).style(theme::header_style());
+    let paragraph = Paragraph::new(line).style(p.header_style());
     frame.render_widget(paragraph, area);
 }
 

@@ -5,16 +5,16 @@ use ratatui::widgets::{Block, Borders, Paragraph, Sparkline};
 use ratatui::Frame;
 
 use crate::app::App;
-use crate::ui::theme;
 use crate::util::format_bytes_rate;
 
 pub fn draw(frame: &mut Frame, app: &App, area: Rect) {
     let net = &app.collector.network_data;
+    let p = &app.palette;
 
     let block = Block::default()
         .title(" Network ")
         .borders(Borders::ALL)
-        .border_style(theme::border_style());
+        .border_style(p.border_style());
 
     let inner = block.inner(area);
     frame.render_widget(block, area);
@@ -27,12 +27,12 @@ pub fn draw(frame: &mut Frame, app: &App, area: Rect) {
     let info = Line::from(vec![
         Span::styled(
             format!("▼ {}", format_bytes_rate(net.bytes_received)),
-            Style::default().fg(theme::NETWORK_RX_COLOR),
+            Style::default().fg(p.network_rx),
         ),
         Span::raw("  "),
         Span::styled(
             format!("▲ {}", format_bytes_rate(net.bytes_transmitted)),
-            Style::default().fg(theme::NETWORK_TX_COLOR),
+            Style::default().fg(p.network_tx),
         ),
     ]);
     frame.render_widget(Paragraph::new(info), chunks[0]);
@@ -40,6 +40,6 @@ pub fn draw(frame: &mut Frame, app: &App, area: Rect) {
     let data = app.net_rx_history_sparkline();
     let sparkline = Sparkline::default()
         .data(&data)
-        .style(Style::default().fg(theme::NETWORK_RX_COLOR));
+        .style(Style::default().fg(p.network_rx));
     frame.render_widget(sparkline, chunks[1]);
 }

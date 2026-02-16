@@ -4,16 +4,16 @@ use ratatui::widgets::{Block, Borders, Gauge, Sparkline};
 use ratatui::Frame;
 
 use crate::app::App;
-use crate::ui::theme;
 use crate::util::format_bytes;
 
 pub fn draw(frame: &mut Frame, app: &App, area: Rect) {
     let sys = &app.collector.system_data;
+    let p = &app.palette;
 
     let block = Block::default()
         .title(" Memory ")
         .borders(Borders::ALL)
-        .border_style(theme::border_style());
+        .border_style(p.border_style());
 
     let inner = block.inner(area);
     frame.render_widget(block, area);
@@ -36,7 +36,7 @@ pub fn draw(frame: &mut Frame, app: &App, area: Rect) {
         ram_pct
     );
     let ram_gauge = Gauge::default()
-        .gauge_style(Style::default().fg(theme::MEMORY_COLOR))
+        .gauge_style(Style::default().fg(p.memory))
         .percent(ram_pct.min(100))
         .label(ram_label);
     frame.render_widget(ram_gauge, chunks[0]);
@@ -54,7 +54,7 @@ pub fn draw(frame: &mut Frame, app: &App, area: Rect) {
         swap_pct
     );
     let swap_gauge = Gauge::default()
-        .gauge_style(Style::default().fg(theme::SWAP_COLOR))
+        .gauge_style(Style::default().fg(p.swap))
         .percent(swap_pct.min(100))
         .label(swap_label);
     frame.render_widget(swap_gauge, chunks[1]);
@@ -63,6 +63,6 @@ pub fn draw(frame: &mut Frame, app: &App, area: Rect) {
     let data = app.mem_history_sparkline();
     let sparkline = Sparkline::default()
         .data(&data)
-        .style(Style::default().fg(theme::MEMORY_COLOR));
+        .style(Style::default().fg(p.memory));
     frame.render_widget(sparkline, chunks[2]);
 }

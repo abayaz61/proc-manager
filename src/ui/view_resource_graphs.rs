@@ -1,11 +1,10 @@
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
-use ratatui::style::{Color, Style};
+use ratatui::style::Style;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, Gauge, Paragraph, Sparkline};
 use ratatui::Frame;
 
 use crate::app::App;
-use crate::ui::theme;
 use crate::util::{format_bytes, format_bytes_rate};
 
 pub fn draw(frame: &mut Frame, app: &App, area: Rect) {
@@ -31,10 +30,12 @@ pub fn draw(frame: &mut Frame, app: &App, area: Rect) {
 }
 
 fn draw_cpu_panel(frame: &mut Frame, app: &App, area: Rect) {
+    let p = &app.palette;
+
     let block = Block::default()
         .title(" CPU History ")
         .borders(Borders::ALL)
-        .border_style(theme::border_style());
+        .border_style(p.border_style());
 
     let inner = block.inner(area);
     frame.render_widget(block, area);
@@ -46,7 +47,7 @@ fn draw_cpu_panel(frame: &mut Frame, app: &App, area: Rect) {
 
     let cpu = app.collector.system_data.global_cpu_usage;
     let gauge = Gauge::default()
-        .gauge_style(Style::default().fg(theme::CPU_COLOR))
+        .gauge_style(Style::default().fg(p.cpu))
         .percent(cpu.min(100.0) as u16)
         .label(format!("CPU {:.1}%", cpu));
     frame.render_widget(gauge, chunks[0]);
@@ -54,17 +55,18 @@ fn draw_cpu_panel(frame: &mut Frame, app: &App, area: Rect) {
     let data = app.cpu_history_sparkline();
     let sparkline = Sparkline::default()
         .data(&data)
-        .style(Style::default().fg(theme::CPU_COLOR));
+        .style(Style::default().fg(p.cpu));
     frame.render_widget(sparkline, chunks[1]);
 }
 
 fn draw_memory_panel(frame: &mut Frame, app: &App, area: Rect) {
     let sys = &app.collector.system_data;
+    let p = &app.palette;
 
     let block = Block::default()
         .title(" Memory History ")
         .borders(Borders::ALL)
-        .border_style(theme::border_style());
+        .border_style(p.border_style());
 
     let inner = block.inner(area);
     frame.render_widget(block, area);
@@ -80,7 +82,7 @@ fn draw_memory_panel(frame: &mut Frame, app: &App, area: Rect) {
         0
     };
     let ram_gauge = Gauge::default()
-        .gauge_style(Style::default().fg(theme::MEMORY_COLOR))
+        .gauge_style(Style::default().fg(p.memory))
         .percent(ram_pct.min(100))
         .label(format!(
             "RAM {}/{} ({}%)",
@@ -96,7 +98,7 @@ fn draw_memory_panel(frame: &mut Frame, app: &App, area: Rect) {
         0
     };
     let swap_gauge = Gauge::default()
-        .gauge_style(Style::default().fg(theme::SWAP_COLOR))
+        .gauge_style(Style::default().fg(p.swap))
         .percent(swap_pct.min(100))
         .label(format!(
             "SWP {}/{} ({}%)",
@@ -109,17 +111,18 @@ fn draw_memory_panel(frame: &mut Frame, app: &App, area: Rect) {
     let data = app.mem_history_sparkline();
     let sparkline = Sparkline::default()
         .data(&data)
-        .style(Style::default().fg(theme::MEMORY_COLOR));
+        .style(Style::default().fg(p.memory));
     frame.render_widget(sparkline, chunks[2]);
 }
 
 fn draw_network_panel(frame: &mut Frame, app: &App, area: Rect) {
     let net = &app.collector.network_data;
+    let p = &app.palette;
 
     let block = Block::default()
         .title(" Network History ")
         .borders(Borders::ALL)
-        .border_style(theme::border_style());
+        .border_style(p.border_style());
 
     let inner = block.inner(area);
     frame.render_widget(block, area);
@@ -132,12 +135,12 @@ fn draw_network_panel(frame: &mut Frame, app: &App, area: Rect) {
     let info = Line::from(vec![
         Span::styled(
             format!("▼ RX {}", format_bytes_rate(net.bytes_received)),
-            Style::default().fg(theme::NETWORK_RX_COLOR),
+            Style::default().fg(p.network_rx),
         ),
         Span::raw("  "),
         Span::styled(
             format!("▲ TX {}", format_bytes_rate(net.bytes_transmitted)),
-            Style::default().fg(theme::NETWORK_TX_COLOR),
+            Style::default().fg(p.network_tx),
         ),
     ]);
     frame.render_widget(Paragraph::new(info), chunks[0]);
@@ -145,21 +148,23 @@ fn draw_network_panel(frame: &mut Frame, app: &App, area: Rect) {
     let rx_data = app.net_rx_history_sparkline();
     let rx_sparkline = Sparkline::default()
         .data(&rx_data)
-        .style(Style::default().fg(theme::NETWORK_RX_COLOR));
+        .style(Style::default().fg(p.network_rx));
     frame.render_widget(rx_sparkline, chunks[1]);
 
     let tx_data = app.net_tx_history_sparkline();
     let tx_sparkline = Sparkline::default()
         .data(&tx_data)
-        .style(Style::default().fg(theme::NETWORK_TX_COLOR));
+        .style(Style::default().fg(p.network_tx));
     frame.render_widget(tx_sparkline, chunks[2]);
 }
 
 fn draw_disk_panel(frame: &mut Frame, app: &App, area: Rect) {
+    let p = &app.palette;
+
     let block = Block::default()
         .title(" Disk I/O History ")
         .borders(Borders::ALL)
-        .border_style(theme::border_style());
+        .border_style(p.border_style());
 
     let inner = block.inner(area);
     frame.render_widget(block, area);
@@ -173,19 +178,19 @@ fn draw_disk_panel(frame: &mut Frame, app: &App, area: Rect) {
         .process_list
         .all_entries()
         .iter()
-        .fold((0u64, 0u64), |(r, w), p| {
-            (r + p.disk_read_bytes, w + p.disk_write_bytes)
+        .fold((0u64, 0u64), |(r, w), entry| {
+            (r + entry.disk_read_bytes, w + entry.disk_write_bytes)
         });
 
     let info = Line::from(vec![
         Span::styled(
             format!("R {}", format_bytes_rate(total_read)),
-            Style::default().fg(Color::Green),
+            Style::default().fg(p.disk_read),
         ),
         Span::raw("  "),
         Span::styled(
             format!("W {}", format_bytes_rate(total_write)),
-            Style::default().fg(Color::Red),
+            Style::default().fg(p.disk_write),
         ),
     ]);
     frame.render_widget(Paragraph::new(info), chunks[0]);
@@ -193,12 +198,12 @@ fn draw_disk_panel(frame: &mut Frame, app: &App, area: Rect) {
     let read_data = app.disk_read_history_sparkline();
     let read_sparkline = Sparkline::default()
         .data(&read_data)
-        .style(Style::default().fg(Color::Green));
+        .style(Style::default().fg(p.disk_read));
     frame.render_widget(read_sparkline, chunks[1]);
 
     let write_data = app.disk_write_history_sparkline();
     let write_sparkline = Sparkline::default()
         .data(&write_data)
-        .style(Style::default().fg(Color::Red));
+        .style(Style::default().fg(p.disk_write));
     frame.render_widget(write_sparkline, chunks[2]);
 }

@@ -65,6 +65,9 @@ pub struct ThemeConfig {
 
     #[serde(default = "default_true")]
     pub bold_headers: bool,
+
+    #[serde(default = "default_theme_name")]
+    pub theme_name: String,
 }
 
 impl Default for ThemeConfig {
@@ -72,8 +75,13 @@ impl Default for ThemeConfig {
         Self {
             color_enabled: true,
             bold_headers: true,
+            theme_name: default_theme_name(),
         }
     }
+}
+
+fn default_theme_name() -> String {
+    "Default".to_string()
 }
 
 fn default_tick_rate() -> u64 {
