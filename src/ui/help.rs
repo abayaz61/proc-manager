@@ -5,7 +5,7 @@ use ratatui::widgets::{Block, Borders, Clear, Paragraph};
 use ratatui::Frame;
 
 pub fn draw(frame: &mut Frame) {
-    let area = centered_rect(60, 32, frame.area());
+    let area = centered_rect(60, 33, frame.area());
     frame.render_widget(Clear, area);
 
     let bold = Style::default().add_modifier(Modifier::BOLD);
@@ -82,6 +82,10 @@ pub fn draw(frame: &mut Frame) {
         Line::from(vec![
             Span::styled("  ?          ", key_style),
             Span::raw("Toggle this help"),
+        ]),
+        Line::from(vec![
+            Span::styled("  d          ", key_style),
+            Span::raw("Toggle compact view (hide dashboard)"),
         ]),
         Line::from(""),
         Line::from(Span::styled("View Modes", bold)),

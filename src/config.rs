@@ -52,6 +52,9 @@ pub struct Config {
     pub visible_columns: Vec<String>,
 
     #[serde(default)]
+    pub compact_view: bool,
+
+    #[serde(default)]
     pub theme: ThemeConfig,
 }
 
@@ -107,6 +110,7 @@ impl Default for Config {
             history_len: default_history_len(),
             standalone_window: true,
             keep_dead_pins: false,
+            compact_view: false,
             visible_columns: default_columns(),
             theme: ThemeConfig::default(),
         }

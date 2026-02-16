@@ -14,9 +14,13 @@ pub struct AppLayout {
 }
 
 impl AppLayout {
-    pub fn new(area: Rect, view_mode: ViewMode) -> Self {
+    pub fn new(area: Rect, view_mode: ViewMode, compact_view: bool) -> Self {
         if view_mode != ViewMode::Default {
             return Self::non_default_layout(area);
+        }
+
+        if compact_view {
+            return Self::compact_layout(area);
         }
 
         let is_narrow = area.width < 80;
@@ -76,6 +80,29 @@ impl AppLayout {
             disk_panel,
             process_table: main_chunks[2],
             statusbar: main_chunks[3],
+            main_content: None,
+        }
+    }
+
+    fn compact_layout(area: Rect) -> Self {
+        let chunks = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Length(1), // header
+                Constraint::Min(4),   // process table
+                Constraint::Length(1), // status bar
+            ])
+            .split(area);
+
+        let dummy = Rect::default();
+        Self {
+            header: chunks[0],
+            cpu_panel: dummy,
+            memory_panel: dummy,
+            network_panel: dummy,
+            disk_panel: None,
+            process_table: chunks[1],
+            statusbar: chunks[2],
             main_content: None,
         }
     }

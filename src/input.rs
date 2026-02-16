@@ -59,6 +59,7 @@ fn map_normal(key: KeyEvent) -> Action {
         KeyCode::F(10) | KeyCode::Char('0') => Action::SortBy(SortColumn::DiskWrite),
         KeyCode::F(11) => Action::SortBy(SortColumn::Ppid),
         KeyCode::Tab => Action::CycleViewMode,
+        KeyCode::Char('d') => Action::ToggleCompactView,
         _ => Action::Noop,
     }
 }

@@ -42,5 +42,6 @@ pub enum Action {
     SettingsSelect,
     SettingsSave,
     CycleViewMode,
+    ToggleCompactView,
     Noop,
 }

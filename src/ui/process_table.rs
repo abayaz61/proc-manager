@@ -206,10 +206,22 @@ impl Column {
     }
 }
 
+const COMPACT_COLUMNS: &[Column] = &[
+    Column::Pid,
+    Column::Name,
+    Column::Cpu,
+    Column::Memory,
+    Column::Status,
+];
+
 pub fn draw(frame: &mut Frame, app: &App, area: Rect) {
     app.process_table_area.set(area);
 
-    let columns = &app.visible_columns;
+    let columns: &[Column] = if app.compact_view {
+        COMPACT_COLUMNS
+    } else {
+        &app.visible_columns
+    };
     let has_pins = app.process_list.has_pins();
 
     let now = std::time::SystemTime::now()

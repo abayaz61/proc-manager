@@ -54,6 +54,8 @@ pub fn draw(frame: &mut Frame, app: &App, area: Rect) {
                     Span::raw("Sort "),
                     Span::styled("[n]", Style::default().fg(Color::Cyan)),
                     Span::raw("New "),
+                    Span::styled("[d]", Style::default().fg(Color::Cyan)),
+                    Span::raw("Compact "),
                     Span::styled("[s]", Style::default().fg(Color::Cyan)),
                     Span::raw("Settings "),
                     Span::styled("[?]", Style::default().fg(Color::Cyan)),

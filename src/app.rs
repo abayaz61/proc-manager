@@ -119,6 +119,7 @@ pub enum ContextMenuAction {
 pub struct App {
     pub mode: AppMode,
     pub view_mode: ViewMode,
+    pub compact_view: bool,
     pub collector: DataCollector,
     pub process_list: ProcessList,
     pub table_state: TableState,
@@ -158,9 +159,12 @@ impl App {
         let persisted = ProcessState::load();
         process_list.load_persisted_state(persisted.pinned_set(), persisted.hidden_set());
 
+        let compact_view = config.compact_view;
+
         Self {
             mode: AppMode::Normal,
             view_mode: ViewMode::Default,
+            compact_view,
             collector: DataCollector::new(),
             process_list,
             table_state: TableState::default().with_selected(0),
@@ -303,6 +307,13 @@ impl App {
                     self.open_settings();
                     return;
                 }
+                Action::ToggleCompactView => {
+                    self.compact_view = !self.compact_view;
+                    self.config.compact_view = self.compact_view;
+                    let label = if self.compact_view { "ON" } else { "OFF" };
+                    self.set_status(format!("Compact view: {}", label));
+                    return;
+                }
                 _ => return,
             }
         }
@@ -364,6 +375,12 @@ impl App {
             Action::SettingsSave => self.settings_save(),
             Action::CycleViewMode => {
                 self.view_mode = self.view_mode.next();
+            }
+            Action::ToggleCompactView => {
+                self.compact_view = !self.compact_view;
+                self.config.compact_view = self.compact_view;
+                let label = if self.compact_view { "ON" } else { "OFF" };
+                self.set_status(format!("Compact view: {}", label));
             }
             Action::Noop => {}
         }
@@ -911,6 +928,10 @@ impl App {
                 label: "Keep Dead Pins".to_string(),
                 value: self.config.keep_dead_pins,
             },
+            SettingsItem::Toggle {
+                label: "Compact View".to_string(),
+                value: self.compact_view,
+            },
         ];
 
         // Column toggles for optional columns
@@ -1054,6 +1075,10 @@ impl App {
                         "Bold Headers" => self.config.theme.bold_headers = *value,
                         "Standalone Window" => self.config.standalone_window = *value,
                         "Keep Dead Pins" => self.config.keep_dead_pins = *value,
+                        "Compact View" => {
+                            self.compact_view = *value;
+                            self.config.compact_view = *value;
+                        }
                         _ => {
                             // Handle "Column: XYZ" toggles
                             if let Some(col_name) = label.strip_prefix("Column: ") {

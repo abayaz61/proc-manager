@@ -23,18 +23,20 @@ use crate::app::{App, ViewMode};
 use layout::AppLayout;
 
 pub fn draw(frame: &mut Frame, app: &App) {
-    let layout = AppLayout::new(frame.area(), app.view_mode);
+    let layout = AppLayout::new(frame.area(), app.view_mode, app.compact_view);
 
     header::draw(frame, &app.collector.system_data, layout.header);
 
     match app.view_mode {
         ViewMode::Default => {
-            cpu_panel::draw(frame, app, layout.cpu_panel);
-            memory_panel::draw(frame, app, layout.memory_panel);
-            network_panel::draw(frame, app, layout.network_panel);
+            if !app.compact_view {
+                cpu_panel::draw(frame, app, layout.cpu_panel);
+                memory_panel::draw(frame, app, layout.memory_panel);
+                network_panel::draw(frame, app, layout.network_panel);
 
-            if let Some(disk_area) = layout.disk_panel {
-                disk_panel::draw(frame, app, disk_area);
+                if let Some(disk_area) = layout.disk_panel {
+                    disk_panel::draw(frame, app, disk_area);
+                }
             }
 
             process_table::draw(frame, app, layout.process_table);
