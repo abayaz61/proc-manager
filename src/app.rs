@@ -124,6 +124,7 @@ pub struct App {
     pub compact_view: bool,
     pub palette: ColorPalette,
     pub theme_picker_selected: usize,
+    pub theme_picker_previous: Option<ColorPalette>,
     pub collector: DataCollector,
     pub process_list: ProcessList,
     pub table_state: TableState,
@@ -176,6 +177,7 @@ impl App {
             compact_view,
             palette,
             theme_picker_selected,
+            theme_picker_previous: None,
             collector: DataCollector::new(),
             process_list,
             table_state: TableState::default().with_selected(0),
@@ -356,7 +358,11 @@ impl App {
                 if self.mode == AppMode::ContextMenu {
                     self.context_menu = None;
                 }
-                // ThemePicker just closes, no special cleanup needed
+                if self.mode == AppMode::ThemePicker {
+                    self.theme_picker_cancel();
+                    self.status_message = None;
+                    return;
+                }
                 self.mode = AppMode::Normal;
                 self.status_message = None;
             }
@@ -1163,6 +1169,7 @@ impl App {
             .iter()
             .position(|p| p.name == self.palette.name)
             .unwrap_or(0);
+        self.theme_picker_previous = Some(self.palette);
         self.mode = AppMode::ThemePicker;
     }
 
@@ -1173,17 +1180,27 @@ impl App {
         } else {
             self.theme_picker_selected = (self.theme_picker_selected + 1).min(count - 1);
         }
+        // Live preview
+        self.palette = crate::ui::theme::ALL_PALETTES[self.theme_picker_selected];
     }
 
     fn theme_picker_select(&mut self) {
         let palette = crate::ui::theme::ALL_PALETTES[self.theme_picker_selected];
         self.palette = palette;
         self.config.theme.theme_name = palette.name.to_string();
+        self.theme_picker_previous = None;
         self.mode = AppMode::Normal;
         match self.config.save() {
             Ok(_) => self.set_status(format!("Theme: {}", palette.name)),
             Err(e) => self.set_status(format!("Theme set but save failed: {}", e)),
         }
+    }
+
+    fn theme_picker_cancel(&mut self) {
+        if let Some(prev) = self.theme_picker_previous.take() {
+            self.palette = prev;
+        }
+        self.mode = AppMode::Normal;
     }
 
     pub fn selected_process(&self) -> Option<&crate::data::process::ProcessEntry> {
