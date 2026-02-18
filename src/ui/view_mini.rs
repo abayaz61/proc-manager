@@ -1,4 +1,4 @@
-use ratatui::layout::{Constraint, Direction, Layout, Rect, Alignment};
+use ratatui::layout::{Alignment, Constraint, Direction, Layout, Rect};
 use ratatui::style::{Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, Cell, Paragraph, Row, Table};
@@ -48,21 +48,26 @@ fn draw_system_stats(frame: &mut Frame, app: &App, area: Rect) {
     let disk_r_style = Style::default().fg(p.disk_read);
     let disk_w_style = Style::default().fg(p.disk_write);
 
-    let lines = vec![
-        Line::from(vec![
-            Span::styled("  CPU: ", label),
-            Span::styled(format!("{:.1}%", cpu_pct), cpu_style),
-            Span::styled("    RAM: ", label),
-            Span::styled(
-                format!("{}/{} ({:.0}%)", format_bytes(mem_used), format_bytes(mem_total), mem_pct),
-                mem_style,
-            ),
+    // Fixed-width table: Label | Value | Label | Value
+    let widths = [
+        Constraint::Length(10),  // label 1
+        Constraint::Length(12),  // value 1
+        Constraint::Length(10),  // label 2
+        Constraint::Length(18),  // value 2
+    ];
+
+    let rows = vec![
+        Row::new(vec![
+            Cell::from("CPU").style(label),
+            Cell::from(format!("{:.1}%", cpu_pct)).style(cpu_style),
+            Cell::from("RAM").style(label),
+            Cell::from(format!("{}/{} ({:.0}%)", format_bytes(mem_used), format_bytes(mem_total), mem_pct)).style(mem_style),
         ]),
-        Line::from(vec![
-            Span::styled("  Disk R: ", label),
-            Span::styled(format_bytes(disk_read), disk_r_style),
-            Span::styled("    Disk W: ", label),
-            Span::styled(format_bytes(disk_write), disk_w_style),
+        Row::new(vec![
+            Cell::from("Disk R").style(label),
+            Cell::from(format_bytes(disk_read)).style(disk_r_style),
+            Cell::from("Disk W").style(label),
+            Cell::from(format_bytes(disk_write)).style(disk_w_style),
         ]),
     ];
 
@@ -71,8 +76,8 @@ fn draw_system_stats(frame: &mut Frame, app: &App, area: Rect) {
         .borders(Borders::ALL)
         .border_style(Style::default().fg(p.border));
 
-    let paragraph = Paragraph::new(lines).block(block);
-    frame.render_widget(paragraph, area);
+    let table = Table::new(rows, widths).block(block);
+    frame.render_widget(table, area);
 }
 
 fn draw_pinned_table(frame: &mut Frame, app: &App, area: Rect) {
