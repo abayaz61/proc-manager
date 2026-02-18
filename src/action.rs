@@ -51,5 +51,6 @@ pub enum Action {
     PidFilterInput(char),
     PidFilterBackspace,
     PidFilterSubmit,
+    ToggleAlwaysOnTop,
     Noop,
 }

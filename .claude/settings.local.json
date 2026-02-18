@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(test:*)",
+      "WebSearch",
+      "Bash(cargo init:*)",
+      "Bash(cargo build:*)",
+      "Bash(cargo run:*)",
+      "Bash(powershell -NoProfile -Command:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git config:*)"
+    ]
+  },
+  "outputStyle": "default"
+}

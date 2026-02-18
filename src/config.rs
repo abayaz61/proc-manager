@@ -55,6 +55,9 @@ pub struct Config {
     pub compact_view: bool,
 
     #[serde(default)]
+    pub always_on_top: bool,
+
+    #[serde(default)]
     pub theme: ThemeConfig,
 }
 
@@ -119,6 +122,7 @@ impl Default for Config {
             standalone_window: true,
             keep_dead_pins: false,
             compact_view: false,
+            always_on_top: false,
             visible_columns: default_columns(),
             theme: ThemeConfig::default(),
         }

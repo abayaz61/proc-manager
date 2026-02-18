@@ -208,6 +208,11 @@ impl App {
     pub async fn run(&mut self, terminal: &mut DefaultTerminal) -> Result<()> {
         let mut events = EventHandler::new(self.config.tick_rate_ms);
 
+        // Apply always-on-top from config on startup
+        if self.config.always_on_top {
+            apply_always_on_top(true);
+        }
+
         // Initial data collection
         self.collector.refresh();
         self.update_data();
@@ -334,6 +339,10 @@ impl App {
                     self.open_theme_picker();
                     return;
                 }
+                Action::ToggleAlwaysOnTop => {
+                    self.toggle_always_on_top();
+                    return;
+                }
                 _ => return,
             }
         }
@@ -419,6 +428,7 @@ impl App {
             Action::PidFilterInput(c) => self.pid_filter_input(c),
             Action::PidFilterBackspace => self.pid_filter_backspace(),
             Action::PidFilterSubmit => self.pid_filter_submit(),
+            Action::ToggleAlwaysOnTop => self.toggle_always_on_top(),
             Action::Noop => {}
         }
     }
@@ -969,6 +979,10 @@ impl App {
                 label: "Compact View".to_string(),
                 value: self.compact_view,
             },
+            SettingsItem::Toggle {
+                label: "Always on Top".to_string(),
+                value: self.config.always_on_top,
+            },
         ];
 
         // Column toggles for optional columns
@@ -1126,6 +1140,10 @@ impl App {
                             self.compact_view = *value;
                             self.config.compact_view = *value;
                         }
+                        "Always on Top" => {
+                            self.config.always_on_top = *value;
+                            apply_always_on_top(*value);
+                        }
                         _ => {
                             // Handle "Column: XYZ" toggles
                             if let Some(col_name) = label.strip_prefix("Column: ") {
@@ -1250,6 +1268,15 @@ impl App {
         }
     }
 
+    fn toggle_always_on_top(&mut self) {
+        self.config.always_on_top = !self.config.always_on_top;
+        let enabled = self.config.always_on_top;
+        apply_always_on_top(enabled);
+        let label = if enabled { "ON" } else { "OFF" };
+        self.set_status(format!("Always on Top: {}", label));
+        let _ = self.config.save();
+    }
+
     pub fn selected_process(&self) -> Option<&crate::data::process::ProcessEntry> {
         let idx = self.table_state.selected()?;
         self.process_list.get_by_display_index(idx)
@@ -1280,6 +1307,38 @@ impl App {
     pub fn disk_write_history_sparkline(&self) -> Vec<u64> {
         self.disk_write_history.as_sparkline_data()
     }
+}
+
+#[cfg(target_os = "windows")]
+fn apply_always_on_top(enabled: bool) {
+    use windows::Win32::System::Console::GetConsoleWindow;
+    use windows::Win32::UI::WindowsAndMessaging::{
+        SetWindowPos, HWND_TOPMOST, HWND_NOTOPMOST, SWP_NOMOVE, SWP_NOSIZE, SWP_NOACTIVATE,
+    };
+
+    unsafe {
+        let hwnd = GetConsoleWindow();
+        if hwnd.0 == 0 {
+            return;
+        }
+        let insert_after = if enabled { HWND_TOPMOST } else { HWND_NOTOPMOST };
+        if let Err(error) = SetWindowPos(
+            hwnd,
+            insert_after,
+            0,
+            0,
+            0,
+            0,
+            SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE,
+        ) {
+            eprintln!("Failed to set window position: {}", error);
+        }
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+fn apply_always_on_top(_enabled: bool) {
+    // No-op on non-Windows platforms
 }
 
 fn register_to_path() -> String {

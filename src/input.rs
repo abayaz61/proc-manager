@@ -64,6 +64,7 @@ fn map_normal(key: KeyEvent) -> Action {
         KeyCode::Char('d') => Action::ToggleCompactView,
         KeyCode::Char('t') => Action::OpenThemePicker,
         KeyCode::Char('f') => Action::OpenPidFilter,
+        KeyCode::Char('a') => Action::ToggleAlwaysOnTop,
         _ => Action::Noop,
     }
 }
