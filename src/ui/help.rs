@@ -102,7 +102,7 @@ pub fn draw(frame: &mut Frame, app: &App) {
         Line::from(Span::styled("View Modes", bold)),
         Line::from(vec![
             Span::styled("  Tab        ", key_style),
-            Span::raw("Cycle view: Processes > Per-CPU > Graphs > Overview > SysInfo"),
+            Span::raw("Cycle view: Processes > Per-CPU > Graphs > Overview > SysInfo > Mini"),
         ]),
     ];
 

@@ -22,6 +22,7 @@ pub enum ViewMode {
     ResourceGraphs,
     SystemOverview,
     SystemInfo,
+    MiniMonitor,
 }
 
 impl ViewMode {
@@ -31,7 +32,8 @@ impl ViewMode {
             ViewMode::PerCpuChart => ViewMode::ResourceGraphs,
             ViewMode::ResourceGraphs => ViewMode::SystemOverview,
             ViewMode::SystemOverview => ViewMode::SystemInfo,
-            ViewMode::SystemInfo => ViewMode::Default,
+            ViewMode::SystemInfo => ViewMode::MiniMonitor,
+            ViewMode::MiniMonitor => ViewMode::Default,
         }
     }
 
@@ -42,6 +44,7 @@ impl ViewMode {
             ViewMode::ResourceGraphs => "Graphs",
             ViewMode::SystemOverview => "Overview",
             ViewMode::SystemInfo => "System Info",
+            ViewMode::MiniMonitor => "Mini Monitor",
         }
     }
 }

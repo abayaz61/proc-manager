@@ -16,6 +16,7 @@ pub mod theme_picker;
 pub mod view_overview;
 pub mod view_percpu;
 pub mod view_resource_graphs;
+pub mod view_mini;
 pub mod view_sysinfo;
 
 use ratatui::Frame;
@@ -53,6 +54,9 @@ pub fn draw(frame: &mut Frame, app: &App) {
         }
         ViewMode::SystemInfo => {
             view_sysinfo::draw(frame, app, layout.main_content.unwrap());
+        }
+        ViewMode::MiniMonitor => {
+            view_mini::draw(frame, app, layout.main_content.unwrap());
         }
     }
 
