@@ -9,7 +9,11 @@
       "Bash(powershell -NoProfile -Command:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git config:*)"
+      "Bash(git config:*)",
+      "Bash(cargo --version:*)",
+      "Bash(rustc:*)",
+      "Bash(cargo tree:*)",
+      "Bash(cargo metadata:*)"
     ]
   },
   "outputStyle": "default"

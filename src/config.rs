@@ -57,6 +57,12 @@ pub struct Config {
     #[serde(default)]
     pub always_on_top: bool,
 
+    #[serde(default = "default_font_name")]
+    pub font_name: String,
+
+    #[serde(default = "default_font_size")]
+    pub font_size: u16,
+
     #[serde(default)]
     pub theme: ThemeConfig,
 }
@@ -99,6 +105,12 @@ fn default_history_len() -> usize {
 fn default_true() -> bool {
     true
 }
+fn default_font_name() -> String {
+    "Consolas".to_string()
+}
+fn default_font_size() -> u16 {
+    16
+}
 fn default_columns() -> Vec<String> {
     vec![
         "pid".to_string(),
@@ -123,6 +135,8 @@ impl Default for Config {
             keep_dead_pins: false,
             compact_view: false,
             always_on_top: false,
+            font_name: default_font_name(),
+            font_size: default_font_size(),
             visible_columns: default_columns(),
             theme: ThemeConfig::default(),
         }

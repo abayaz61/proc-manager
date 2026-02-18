@@ -216,6 +216,9 @@ impl App {
             apply_always_on_top(true);
         }
 
+        // Apply console font from config on startup
+        apply_console_font(&self.config.font_name, self.config.font_size);
+
         // Initial data collection
         self.collector.refresh();
         self.update_data();
@@ -988,6 +991,32 @@ impl App {
             },
         ];
 
+        // Font settings
+        let font_options = vec![
+            "Consolas".to_string(),
+            "Cascadia Mono".to_string(),
+            "Cascadia Code".to_string(),
+            "Courier New".to_string(),
+            "Lucida Console".to_string(),
+        ];
+        let font_idx = font_options
+            .iter()
+            .position(|f| f == &self.config.font_name)
+            .unwrap_or(0);
+        items.push(SettingsItem::Cycle {
+            label: "Font".to_string(),
+            options: font_options,
+            selected: font_idx,
+        });
+        items.push(SettingsItem::Slider {
+            label: "Font Size".to_string(),
+            value: self.config.font_size as u64,
+            min: 8,
+            max: 32,
+            step: 1,
+            unit: "px".to_string(),
+        });
+
         // Column toggles for optional columns
         for col in Column::all() {
             if col.is_required() {
@@ -1131,6 +1160,7 @@ impl App {
                     SettingsItem::Slider { label, value, .. } => match label.as_str() {
                         "Refresh Rate" => self.config.tick_rate_ms = *value,
                         "History Length" => self.config.history_len = *value as usize,
+                        "Font Size" => self.config.font_size = *value as u16,
                         _ => {}
                     },
                     SettingsItem::Toggle { label, value } => match label.as_str() {
@@ -1169,6 +1199,8 @@ impl App {
                     } => {
                         if label == "Default Sort Column" {
                             self.config.sort_column = options[*selected].clone();
+                        } else if label == "Font" {
+                            self.config.font_name = options[*selected].clone();
                         }
                     }
                     SettingsItem::Action { .. } => {}
@@ -1187,6 +1219,9 @@ impl App {
             // Apply sort settings at runtime
             let sort_col = self.config.parse_sort_column();
             self.process_list.set_sort(sort_col, self.config.sort_ascending);
+
+            // Apply console font at runtime
+            apply_console_font(&self.config.font_name, self.config.font_size);
 
             match self.config.save() {
                 Ok(_) => self.set_status("Settings saved".to_string()),
@@ -1341,6 +1376,44 @@ fn apply_always_on_top(enabled: bool) {
 
 #[cfg(not(target_os = "windows"))]
 fn apply_always_on_top(_enabled: bool) {
+    // No-op on non-Windows platforms
+}
+
+#[cfg(target_os = "windows")]
+fn apply_console_font(font_name: &str, font_size: u16) {
+    use windows::Win32::System::Console::{
+        GetStdHandle, SetCurrentConsoleFontEx, CONSOLE_FONT_INFOEX, STD_OUTPUT_HANDLE,
+    };
+
+    unsafe {
+        let handle = match GetStdHandle(STD_OUTPUT_HANDLE) {
+            Ok(h) => h,
+            Err(_) => return,
+        };
+
+        let mut face_name = [0u16; 32];
+        let wide: Vec<u16> = font_name.encode_utf16().collect();
+        let len = wide.len().min(31);
+        face_name[..len].copy_from_slice(&wide[..len]);
+
+        let font_info = CONSOLE_FONT_INFOEX {
+            cbSize: std::mem::size_of::<CONSOLE_FONT_INFOEX>() as u32,
+            nFont: 0,
+            dwFontSize: windows::Win32::System::Console::COORD {
+                X: 0,
+                Y: font_size as i16,
+            },
+            FontFamily: 54, // FF_MODERN | FIXED_PITCH
+            FontWeight: 400,
+            FaceName: face_name,
+        };
+
+        let _ = SetCurrentConsoleFontEx(handle, false, &font_info);
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+fn apply_console_font(_font_name: &str, _font_size: u16) {
     // No-op on non-Windows platforms
 }
 
