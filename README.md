@@ -25,7 +25,7 @@ A high-performance, cross-platform terminal process manager built with Rust. Mon
 
 ```bash
 # Clone the repository
-git clone https://github.com/user/proc-manager.git
+git clone https://github.com/abayaz61/proc-manager.git
 cd proc-manager
 
 # Build release binary
